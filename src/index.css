@@ -35,6 +35,21 @@ a:hover {
   min-height: 100vh;
 } */
 
+.nftFrame {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: auto;
+  padding: 32px;
+  background-color: #eed2a7;
+  border: #c4baac solid;
+  border-radius: 3px;
+}
+
+.nftFrame>div {
+  display: flex;
+  align-content: flex-start;
+}
 
 .app {
   display: flex;

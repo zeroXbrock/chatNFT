@@ -33,15 +33,12 @@ export function mintNFT(
     const r = bytesToHex(sigBytes.slice(0, 32))
     const s = bytesToHex(sigBytes.slice(32, 64))
     const v = bytesToHex(sigBytes.slice(64, 65))
-    console.log({ r, s, v })
     let vi = parseInt(v, 16)
     if (vi <= 1) {
         vi += 27
     }
 
-    // const resbytes = hexToBytes(content)
     const decodedQueryResult = hexToString(content)
-    console.log("chatNFT query result", decodedQueryResult)
 
     return {
         to: config.nfteeAddress,
@@ -59,15 +56,13 @@ export function mintNFT(
                 bytes32 r,
                 bytes32 s
                 */
-                tokenId,    // uint256
-                recipient,  // address
-                decodedQueryResult,    // string
-                vi,          // uint8
-                r,          // bytes32
-                s,          // bytes32
+                tokenId,
+                recipient,
+                decodedQueryResult,
+                vi,
+                r,
+                s,
             ],
         })
     }
-    
-    // return await l1Wallet.sendRawTransaction({serializedTransaction: mintTx})
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import { TransactionReceiptSuave, getSuaveProvider, getSuaveWallet } from '@flashbots/suave-viem/chains/utils'
-import { createPublicClient, createWalletClient, hexToString, http } from '@flashbots/suave-viem'
+import { Hex, createPublicClient, createWalletClient, hexToString, http } from '@flashbots/suave-viem'
 import config from './config'
 import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
@@ -31,6 +31,7 @@ function App() {
     transport: http(config.l1RpcHttp),
     chain: L1
   }))
+  const [nftContent, setNftContent] = useState<Hex>()
 
   const onMint = async () => {
     if (!suaveWallet) {
@@ -49,7 +50,6 @@ function App() {
       ...mintTxBase,
       nonce: await l1Provider.getTransactionCount({ address: l1Wallet.account.address }),
     }
-    console.log("sending", mintTx)
     try {
       const mintTxHash = await l1Wallet.sendTransaction(mintTx)
       console.log("Minted NFT on L1", mintTxHash)
@@ -63,7 +63,7 @@ function App() {
       console.error("Failed to mint NFT on L1", e)
       return
     }
-
+    console.log("gonna render")
     // once we mint the NFT, we can render it
     await renderNft(tokenId)
   }
@@ -90,8 +90,19 @@ function App() {
 
   const renderNft = async (tokenId: bigint) => {
     const nft = await readNFT(l1Provider, tokenId)
-    console.log("NFT", nft)
-    // TODO: update UI to render NFT
+    if (!nft.data) {
+      console.error("NFT not found", tokenId)
+      throw new Error("NFT not found")
+    }
+    console.log("nft data", hexToString(nft.data))
+    setNftContent(nft.data)
+  }
+
+  const renderContent = (content: Hex) => {
+    const decoded = hexToString(content).replace(/\\n/g, '\n')
+    return decoded.split('\n').map((line, i) => (
+      <div key={`line_${i + 1}`}><code>{line}</code></div>
+    ))
   }
 
   const onAddPrompt = () => {
@@ -109,7 +120,14 @@ function App() {
           <div style={{ width: "100%" }}><button type='button' onClick={onAddPrompt}>Add Prompt</button></div>
         </div>
         {prompts.length > 0 && <div className="flex flex-col" style={{ width: "100%", alignItems: "flex-start", border: "1px dotted white", padding: 12 }}>
-          <div className='text-xl text-[#f0fff0]'>Your Prompts</div>
+          <div className="flex flex-row" style={{ width: "100%" }}>
+            <div className='basis-1/4 text-xl text-[#f0fff0]'>Your Prompts</div>
+            <div className='basis-3/4 text-xl text-[#f0fff0] flex flex-col' style={{ alignItems: "flex-end" }}>
+              <button className="button-secondary" onClick={() => {
+                setPrompts([])
+              }} type='button'>Clear</button>
+            </div>
+          </div>
           <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
             <div className='basis-1/4'>
               <button type='button' onClick={onMint}>Mint NFT</button>
@@ -117,14 +135,19 @@ function App() {
             <div className='basis-3/4'>
               <ul className='list-disc' style={{ textAlign: "left" }}>
                 {prompts.map((prompt, i) => (
-                  <li key={`prompt_${i * i}`}>{prompt}</li>
+                  <li key={`prompt_${i + 1}`}>{prompt}</li>
                 ))}
               </ul>
             </div>
             <br />
             <br />
           </div>
-          {suaveTxHash && <div>SUAVE Tx Hash: {suaveTxHash}</div>}
+          {suaveTxHash && !nftContent && <div>SUAVE Tx Hash: {suaveTxHash}</div>}
+        </div>}
+        {nftContent && <div style={{ padding: 32, paddingRight: 64, paddingLeft: 64, width: "100%" }}>
+          <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
+          <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
+          <div className='text-lg nftFrame'>{renderContent(nftContent)}</div>
         </div>}
       </div>
     </div>
