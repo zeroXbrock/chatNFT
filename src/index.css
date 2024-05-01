@@ -49,6 +49,7 @@ a:hover {
 .nftFrame>div {
   display: flex;
   align-content: flex-start;
+  color: green;
 }
 
 .app {
