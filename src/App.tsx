@@ -44,32 +44,36 @@ function App() {
       throw new Error("L1 wallet not initialized")
     }
     setIsLoading(true)
-    const suaveReceipt = await sendMintRequest()
-    const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
-    console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
 
-    // send L1 tx to actually mint the NFT
-    const mintTxBase = mintNFT(tokenId, recipient, signature, queryResult)
-    const mintTx = {
-      ...mintTxBase,
-      nonce: await l1Provider.getTransactionCount({ address: l1Wallet.account.address }),
-    }
     try {
-      const mintTxHash = await l1Wallet.sendTransaction(mintTx)
-      console.log("Minted NFT on L1", mintTxHash)
-      const l1Receipt = await l1Provider.waitForTransactionReceipt({ hash: mintTxHash })
-      if (l1Receipt.status !== 'success') {
-        console.error("L1 transaction failed", l1Receipt)
-        throw new Error("L1 transaction failed")
-      }
-      console.log("L1 transaction succeeded", l1Receipt)
-    } catch (e) {
-      console.error("Failed to mint NFT on L1", e)
-      return
-    }
+      const suaveReceipt = await sendMintRequest()
+      const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
+      console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
 
-    // once we mint the NFT, we can render it
-    await renderNft(tokenId)
+      // send L1 tx to actually mint the NFT
+      const mintTxBase = mintNFT(tokenId, recipient, signature, queryResult)
+      const mintTx = {
+        ...mintTxBase,
+        nonce: await l1Provider.getTransactionCount({ address: l1Wallet.account.address }),
+      }
+      try {
+        const mintTxHash = await l1Wallet.sendTransaction(mintTx)
+        console.log("Minted NFT on L1", mintTxHash)
+        const l1Receipt = await l1Provider.waitForTransactionReceipt({ hash: mintTxHash })
+        if (l1Receipt.status !== 'success') {
+          console.error("L1 transaction failed", l1Receipt)
+          throw new Error("L1 transaction failed")
+        }
+        console.log("L1 transaction succeeded", l1Receipt)
+      } catch (e) {
+        alert(`Failed to mint NFT on L1: ${e}`)
+        return setIsLoading(false)
+      }
+      // once we mint the NFT, we can render it
+      await renderNft(tokenId)
+    } catch (e) {
+      alert(`Failed to mint NFT on SUAVE: ${e}`)
+    }
     setIsLoading(false)
   }
 
