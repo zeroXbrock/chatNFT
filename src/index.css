@@ -172,4 +172,10 @@ button:focus-visible {
   background-color: #f9f9f942;
   width: 100%;
   text-align: left;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  align-items: flex-start;
+  font-family: monospace;
+  font-size: 1.13em;
 }

@@ -36,7 +36,6 @@ function App() {
       if ('ethereum' in window) {
         const ethereum = window.ethereum as EthereumProvider
         const accounts: Address[] = await ethereum.request({ method: 'eth_requestAccounts' })
-        console.log("accounts", accounts)
         setSuaveWallet(getSuaveWallet({
           transport: custom(ethereum as EthereumProvider),
           jsonRpcAccount: accounts[0],
@@ -184,9 +183,8 @@ function App() {
         </div>}
       </div>
       <div className="footer">
-        <code>
-          L1 NFT Address: <strong>{config.nfteeAddress}</strong>
-        </code>
+        <div>L1 NFT Address: {config.nfteeAddress}</div>
+        <div>Connected Wallet: {suaveWallet?.account.address}</div>
       </div>
     </div>
   )
