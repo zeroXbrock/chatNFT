@@ -123,7 +123,7 @@ function App() {
   }
 
   const renderedNFT = (content: Hex) => {
-    const decoded = hexToString(content).replace(/\\n/g, '\n')
+    const decoded = hexToString(content).replace(/\\n/g, '\n').replace(/\\\\/g, '\\')
     return decoded.split('\n').map((line, i) => (
       <div key={`line_${i + 1}`}><code>{line}</code></div>
     ))
