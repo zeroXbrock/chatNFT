@@ -2,7 +2,7 @@ import config from "../config"
 import { Address, Hex, encodeFunctionData, parseGwei } from '@flashbots/suave-viem'
 import { encodeAbiParameters } from '@flashbots/suave-viem/abi'
 import { TransactionRequestSuave } from '@flashbots/suave-viem/chains/utils'
-import mintAbi from '../abi/mintNFT'
+import mintAbi from '../abi/MintNFTConfidentialParams'
 import ChatNFT from '../abi/ChatNFT.json'
 
 export class MintRequest {
