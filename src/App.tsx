@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
-import { TransactionReceiptSuave, getSuaveProvider, getSuaveWallet } from '@flashbots/suave-viem/chains/utils'
-import { Hex, createPublicClient, createWalletClient, hexToString, http } from '@flashbots/suave-viem'
+import { SuaveWallet, TransactionReceiptSuave, getSuaveProvider, getSuaveWallet } from '@flashbots/suave-viem/chains/utils'
+import { Address, CustomTransport, Hex, HttpTransport, createPublicClient, createWalletClient, custom, hexToString, http } from '@flashbots/suave-viem'
 import config from './config'
 import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
@@ -10,31 +10,43 @@ import { L1 } from './L1/chain'
 import { mintNFT, readNFT } from './L1/nftee'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
+type EthereumProvider = { request(...args: any): Promise<any> }
 
 function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [promptInput, setPromptInput] = useState<string>("")
   const [prompts, setPrompts] = useState<string[]>([])
   const [suaveTxHash, setSuaveTxHash] = useState<string>()
-  const [suaveWallet] = useState(
-    getSuaveWallet({
-      transport: http(config.suaveRpcHttp),
-      privateKey: config.suavePrivateKey,
-    })
-  )
-  // TODO: replace with metamask wallet
-  const [l1Wallet] = useState(
-    createWalletClient({
-      account: privateKeyToAccount(config.l1PrivateKey),
-      chain: L1,
-      transport: http(config.l1RpcHttp),
-    }))
+  const [suaveWallet, setSuaveWallet] = useState<SuaveWallet<CustomTransport>>()
+  const [l1Wallet] = useState(createWalletClient({
+    account: privateKeyToAccount(config.l1PrivateKey),
+    chain: L1,
+    transport: http(config.l1RpcHttp),
+  }))
   const [suaveProvider] = useState(getSuaveProvider(http(config.suaveRpcHttp)))
   const [l1Provider] = useState(createPublicClient({
     transport: http(config.l1RpcHttp),
     chain: L1
   }))
   const [nftContent, setNftContent] = useState<Hex>()
+  const [tokenId, setTokenId] = useState<bigint>()
+
+  useEffect(() => {
+    const load = async () => {
+      if ('ethereum' in window) {
+        const ethereum = window.ethereum as EthereumProvider
+        const accounts: Address[] = await ethereum.request({ method: 'eth_requestAccounts' })
+        console.log("accounts", accounts)
+        setSuaveWallet(getSuaveWallet({
+          transport: custom(ethereum as EthereumProvider),
+          jsonRpcAccount: accounts[0],
+        }))
+      } else {
+        alert("Metamask not found. Please install Metamask.")
+      }
+    }
+    load()
+  }, [])
 
   const onMint = async () => {
     if (!suaveWallet) {
@@ -49,6 +61,7 @@ function App() {
       const suaveReceipt = await sendMintRequest()
       const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
       console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
+      setTokenId(tokenId)
 
       // send L1 tx to actually mint the NFT
       const mintTxBase = mintNFT(tokenId, recipient, signature, queryResult)
@@ -82,7 +95,7 @@ function App() {
       throw new Error("Suave wallet not initialized")
     }
     const mintRequest = new MintRequest(
-      l1Wallet.account.address,
+      suaveWallet.account.address,
       config.l1PrivateKey,
       prompts,
     )
@@ -165,7 +178,15 @@ function App() {
           <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
           <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
           <div className='text-lg nftFrame'>{renderContent(nftContent)}</div>
+          {!!tokenId && <div style={{ margin: 16, width: "100%", textAlign: "center" }} className='text-lg'>
+            Token ID: {tokenId.toString()}
+          </div>}
         </div>}
+      </div>
+      <div className="footer">
+        <code>
+          L1 NFT Address: <strong>{config.nfteeAddress}</strong>
+        </code>
       </div>
     </div>
   )

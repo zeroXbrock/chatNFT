@@ -162,3 +162,14 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
 }
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  padding: 4px;
+  padding-left: 8px;
+  background-color: #f9f9f942;
+  width: 100%;
+  text-align: left;
+}
