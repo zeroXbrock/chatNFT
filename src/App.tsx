@@ -118,7 +118,8 @@ function App() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-      <div className="text-2xl font-medium">ChatNFT on SUAVE</div>
+      <div className="text-2xl font-medium">🌿 ChatNFT</div>
+      <div className='text-sm'>Mint an NFT from a ChatGPT prompt. Powered by SUAVE.</div>
       <div className='container mx-auto app'>
         <div id="promptArea" className="flex flex-col">
           <div className='text-lg'>Enter a prompt:</div>

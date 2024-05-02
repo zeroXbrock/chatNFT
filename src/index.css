@@ -24,12 +24,12 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #64ff90;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #535bf2;
+  color: #d4ffa0;
 }
 
 input {
@@ -123,7 +123,10 @@ button {
 }
 
 button:hover {
-  border-color: #646cff;
+  background: linear-gradient(225deg,
+      rgba(176, 238, 174, 0.5) 0%,
+      rgba(148, 187, 233, 0.5) 100%);
+  border-color: rgba(172, 172, 172, 0.192);
 }
 
 button:focus,
