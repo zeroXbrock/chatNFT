@@ -57,12 +57,14 @@ function App() {
     setIsLoading(true)
 
     try {
+      // SUAVE creates the NFT & returns the signature required to mint it
       const suaveReceipt = await sendMintRequest()
       const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
       console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
       setTokenId(tokenId)
 
       // send L1 tx to actually mint the NFT
+      // SUAVE could do this for us but we're doing it here for simplicity
       const mintTxBase = mintNFT(tokenId, recipient, signature, queryResult)
       const mintTx = {
         ...mintTxBase,
@@ -81,8 +83,8 @@ function App() {
         alert(`Failed to mint NFT on L1: ${e}`)
         return setIsLoading(false)
       }
-      // once we mint the NFT, we can render it
-      await renderNft(tokenId)
+      // now NFT is minted, we can render it
+      await renderNFT(tokenId)
     } catch (e) {
       alert(`Failed to mint NFT on SUAVE: ${e}`)
     }
@@ -109,7 +111,7 @@ function App() {
     return receipt
   }
 
-  const renderNft = async (tokenId: bigint) => {
+  const renderNFT = async (tokenId: bigint) => {
     console.debug("Rendering NFT", tokenId)
     const nft = await readNFT(l1Provider, tokenId)
     if (!nft.data) {
@@ -120,7 +122,7 @@ function App() {
     setNftContent(nft.data)
   }
 
-  const renderContent = (content: Hex) => {
+  const renderedNFT = (content: Hex) => {
     const decoded = hexToString(content).replace(/\\n/g, '\n')
     return decoded.split('\n').map((line, i) => (
       <div key={`line_${i + 1}`}><code>{line}</code></div>
@@ -183,7 +185,7 @@ function App() {
         {nftContent && <div className="nftFrameContainer">
           <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
           <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
-          <div className='text-lg nftFrame'>{renderContent(nftContent)}</div>
+          <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
           {!!tokenId && <div style={{ margin: 16, width: "100%", textAlign: "center" }} className='text-lg'>
             Token ID: {tokenId.toString()}
           </div>}

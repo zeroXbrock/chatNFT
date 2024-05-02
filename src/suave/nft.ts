@@ -32,7 +32,6 @@ export async function parseChatNFTLogs(receipt: TransactionReceiptSuave) {
     if (!queryResultLog) {
         throw new Error("No QueryResult log found")
     }
-    // decode logs & return all their datas
     const { recipient, signature, tokenId } = nftCreatedLog.args as {
         recipient: Address, signature: Hex, tokenId: bigint
     }

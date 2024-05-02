@@ -10,8 +10,7 @@ struct MintNFTConfidentialParams {
   {type: 'address', name: 'recipient'}
   {type: 'string[]', name: 'prompts'}
   {type: 'string', name: 'openaiApiKey'}
-}
-*/
+}*/
 [{
   components: [
     {name: 'privateKey', type: 'string'},
