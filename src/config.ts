@@ -10,7 +10,6 @@ const requireVar = (name: string) => {
 }
 
 export default {
-    suavePrivateKey: requireVar("SUAVE_PRIVATE_KEY") as Hex,
     suaveKettleAddress: (process.env.SUAVE_KETTLE_ADDRESS || "0x03493869959c866713c33669ca118e774a30a0e5") as Address,
     suaveRpcHttp: process.env.SUAVE_RPC_HTTP || suaveRigil.rpcUrls.public.http[0],
     l1ChainId: parseInt(process.env.L1_CHAIN_ID || "11155111"),

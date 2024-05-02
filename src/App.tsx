@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { SuaveWallet, TransactionReceiptSuave, getSuaveProvider, getSuaveWallet } from '@flashbots/suave-viem/chains/utils'
-import { Address, CustomTransport, Hex, HttpTransport, createPublicClient, createWalletClient, custom, hexToString, http } from '@flashbots/suave-viem'
+import { Address, CustomTransport, Hex, createPublicClient, createWalletClient, custom, hexToString, http } from '@flashbots/suave-viem'
 import config from './config'
 import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
