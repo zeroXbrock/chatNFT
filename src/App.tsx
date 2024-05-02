@@ -91,6 +91,7 @@ function App() {
   }
 
   const renderNft = async (tokenId: bigint) => {
+    console.debug("Rendering NFT", tokenId)
     const nft = await readNFT(l1Provider, tokenId)
     if (!nft.data) {
       console.error("NFT not found", tokenId)
@@ -149,7 +150,7 @@ function App() {
           </div>
           {suaveTxHash && !nftContent && <div>SUAVE Tx Hash: {suaveTxHash}</div>}
         </div>}
-        {nftContent && <div style={{ padding: 32, paddingRight: 64, paddingLeft: 64, width: "100%" }}>
+        {nftContent && <div className="nftFrameContainer">
           <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
           <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
           <div className='text-lg nftFrame'>{renderContent(nftContent)}</div>

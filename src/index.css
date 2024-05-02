@@ -59,6 +59,17 @@ input {
   background-color: #eed2a7;
   border: #c4baac solid;
   border-radius: 3px;
+  width: max-content;
+}
+
+.nftFrameContainer {
+  padding: 32px;
+  padding-right: 64px;
+  padding-left: 64px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .nftFrame>div {
