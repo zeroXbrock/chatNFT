@@ -12,6 +12,7 @@ import { mintNFT, readNFT } from './L1/nftee'
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 
 function App() {
+  const [isLoading, setIsLoading] = useState(false)
   const [promptInput, setPromptInput] = useState<string>("")
   const [prompts, setPrompts] = useState<string[]>([])
   const [suaveTxHash, setSuaveTxHash] = useState<string>()
@@ -42,6 +43,7 @@ function App() {
     if (!l1Wallet || !l1Wallet.account) {
       throw new Error("L1 wallet not initialized")
     }
+    setIsLoading(true)
     const suaveReceipt = await sendMintRequest()
     const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
     console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
@@ -68,6 +70,7 @@ function App() {
 
     // once we mint the NFT, we can render it
     await renderNft(tokenId)
+    setIsLoading(false)
   }
 
   const sendMintRequest = async (): Promise<TransactionReceiptSuave> => {
@@ -118,6 +121,9 @@ function App() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      {isLoading && <div className="loading">
+        Loading
+      </div>}
       <div className="text-2xl font-medium">🌿 ChatNFT</div>
       <div className='text-sm'>Mint an NFT from a ChatGPT prompt. Powered by SUAVE.</div>
       <div className='container mx-auto app'>
