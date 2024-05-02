@@ -41,7 +41,7 @@ function App() {
           jsonRpcAccount: accounts[0],
         }))
       } else {
-        alert("Metamask not found. Please install Metamask.")
+        alert("Browser wallet not found. Please install one to continue.")
       }
     }
     load()
