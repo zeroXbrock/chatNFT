@@ -145,8 +145,15 @@ function App() {
       <div className='container mx-auto app'>
         <div id="promptArea" className="flex flex-col">
           <div className='text-lg'>Enter a prompt:</div>
-          <div style={{ width: "100%" }}><input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput} onChange={e => setPromptInput(e.target.value)} /></div>
-          <div style={{ width: "100%" }}><button type='button' onClick={onAddPrompt}>Add Prompt</button></div>
+          <div style={{ width: "100%" }}>
+            <form onSubmit={e => {
+              e.preventDefault()
+              onAddPrompt()
+            }}>
+              <input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput} onChange={e => setPromptInput(e.target.value)} style={{ width: "100%" }} />
+              <div style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
+            </form>
+          </div>
         </div>
         {prompts.length > 0 && <div className="flex flex-col" style={{ width: "100%", alignItems: "flex-start", border: "1px dotted white", padding: 12 }}>
           <div className="flex flex-row" style={{ width: "100%" }}>
