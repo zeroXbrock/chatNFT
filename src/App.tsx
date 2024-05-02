@@ -9,6 +9,8 @@ import { privateKeyToAccount } from '@flashbots/suave-viem/accounts'
 import { L1 } from './L1/chain'
 import { mintNFT, readNFT } from './L1/nftee'
 
+const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
+
 function App() {
   const [promptInput, setPromptInput] = useState<string>("")
   const [prompts, setPrompts] = useState<string[]>([])
@@ -63,7 +65,7 @@ function App() {
       console.error("Failed to mint NFT on L1", e)
       return
     }
-    console.log("gonna render")
+
     // once we mint the NFT, we can render it
     await renderNft(tokenId)
   }
@@ -106,6 +108,9 @@ function App() {
   }
 
   const onAddPrompt = () => {
+    if (!promptInput) {
+      return setPrompts([...prompts, defaultPrompt])
+    }
     setPrompts([...prompts, promptInput])
     setPromptInput("")
   }
@@ -116,24 +121,24 @@ function App() {
       <div className='container mx-auto app'>
         <div id="promptArea" className="flex flex-col">
           <div className='text-lg'>Enter a prompt:</div>
-          <div style={{ width: "100%" }}><input name='promptInput' type='text' value={promptInput} onChange={e => setPromptInput(e.target.value)} /></div>
+          <div style={{ width: "100%" }}><input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput} onChange={e => setPromptInput(e.target.value)} /></div>
           <div style={{ width: "100%" }}><button type='button' onClick={onAddPrompt}>Add Prompt</button></div>
         </div>
         {prompts.length > 0 && <div className="flex flex-col" style={{ width: "100%", alignItems: "flex-start", border: "1px dotted white", padding: 12 }}>
           <div className="flex flex-row" style={{ width: "100%" }}>
-            <div className='basis-1/4 text-xl text-[#f0fff0]'>Your Prompts</div>
+            <div style={{ textAlign: 'left', paddingLeft: 32, paddingTop: 16 }} className='basis-1/4 text-xl'>Your Prompts</div>
             <div className='basis-3/4 text-xl text-[#f0fff0] flex flex-col' style={{ alignItems: "flex-end" }}>
-              <button className="button-secondary" onClick={() => {
+              <button style={{ width: "min-content" }} onClick={() => {
                 setPrompts([])
               }} type='button'>Clear</button>
             </div>
           </div>
           <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
             <div className='basis-1/4'>
-              <button type='button' onClick={onMint}>Mint NFT</button>
+              <button type='button' className='button-secondary' onClick={onMint}>Mint NFT</button>
             </div>
             <div className='basis-3/4'>
-              <ul className='list-disc' style={{ textAlign: "left" }}>
+              <ul className='list-disc' style={{ textAlign: "left", paddingLeft: 64 }}>
                 {prompts.map((prompt, i) => (
                   <li key={`prompt_${i + 1}`}>{prompt}</li>
                 ))}
