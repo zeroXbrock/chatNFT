@@ -128,7 +128,7 @@ function App() {
       .replace(/\\n/g, '\n')
       .replace("\ ", "")
     return decoded.split('\n').map((line, i) => (
-      <div key={`line_${i + 1}`}><code>{line}</code></div>
+      <div key={`line_${i + 1}`}><code style={{ whiteSpace: "pre" }}>{line}</code></div>
     ))
   }
 
