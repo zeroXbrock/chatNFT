@@ -1,6 +1,6 @@
 import { Address, Hex, decodeEventLog, getEventSelector } from '@flashbots/suave-viem';
 import { TransactionReceiptSuave } from '@flashbots/suave-viem/chains/utils';
-import ChatNFT from '../abi/ChatNFT.json';
+import ChatNFT from '../contracts/out/ChatNFT.sol/ChatNFT.json';
 
 export async function parseChatNFTLogs(receipt: TransactionReceiptSuave) {
     const logs = receipt.logs

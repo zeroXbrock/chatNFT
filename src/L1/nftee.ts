@@ -1,6 +1,6 @@
 import { Address, Hex, PublicClient, bytesToHex, encodeFunctionData, hexToBytes, hexToString, parseGwei } from '@flashbots/suave-viem'
 import config from '../config'
-import NFTEE from '../abi/NFTEE.json'
+import NFTEE from '../contracts/out/NFTEE2.sol/SuaveNFT.json'
 
 export async function readNFT(
     ethProvider: PublicClient,

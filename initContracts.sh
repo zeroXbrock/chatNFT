@@ -39,24 +39,15 @@ if [[ "$l1Balance" < "$(cast to-wei 40)" ]]; then
         $L1_ADDRESS
 fi
 
-# clone suapp-examples repo to get our contracts
-git clone https://github.com/flashbots/suapp-examples.git /tmp/suapp-examples
-cd /tmp/suapp-examples
-
-# (temporary until merged) checkout the branch we need
-git checkout brock/chatNFT
-git pull
-
 # build contracts & copy artifacts to src/abi/
+cd src/contracts
 forge build
-cp ./out/ChatNFT.sol/ChatNFT.json $SCRIPT_DIR/src/abi/ChatNFT.json
-cp ./out/NFTEE2.sol/SuaveNFT.json $SCRIPT_DIR/src/abi/NFTEE.json
 
 # deploy contracts from chatGPT-nft-minter example
 ChatNFTAddress=$(forge create --json -r $SUAVE_RPC_HTTP --private-key $SUAVE_PRIVATE_KEY \
-    ./examples/chatGPT-nft-minter/suave/ChatNFT.sol:ChatNFT | jq -r '.deployedTo')
+    ./suave/ChatNFT.sol:ChatNFT | jq -r '.deployedTo')
 NFTEEAddress=$(forge create --json --legacy -r $L1_RPC_HTTP --private-key $L1_PRIVATE_KEY \
-    ./examples/chatGPT-nft-minter/ethL1/NFTEE2.sol:SuaveNFT --constructor-args $L1_ADDRESS | jq -r '.deployedTo')
+    ./ethL1/NFTEE2.sol:SuaveNFT --constructor-args $L1_ADDRESS | jq -r '.deployedTo')
 
 echo -e "ChatNFT Address:\t$ChatNFTAddress"
 echo -e "NFTEE Address:\t\t$NFTEEAddress"
