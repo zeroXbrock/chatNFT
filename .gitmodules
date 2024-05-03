@@ -4,3 +4,6 @@
 [submodule "src/contracts/lib/suave-std"]
 	path = src/contracts/lib/suave-std
 	url = https://github.com/flashbots/suave-std
+[submodule "src/contracts/lib/solmate"]
+	path = src/contracts/lib/solmate
+	url = https://github.com/transmissions11/solmate
