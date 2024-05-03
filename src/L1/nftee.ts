@@ -6,14 +6,20 @@ export async function readNFT(
     ethProvider: PublicClient,
     tokenId: bigint,
 ) {
+    // Use `tokenData` to read NFT data directly from the contract,
+    // which we'll render for humans locally.
     const nft = await ethProvider.call({
         to: config.nfteeAddress,
         data: encodeFunctionData({
             abi: NFTEE.abi,
-            functionName: 'tokenURI',
+            functionName: 'tokenData',
             args: [tokenId],
         })
     })
+    // We could also use `tokenURI` to get the metadata URI; on
+    // GET, it returns ERC721Metadata{name, description, image}.
+    // Then make a GET request to the URL at `metadata.image` to
+    // get an SVG rendered from the NFT's onchain data.
     return nft
 }
 
