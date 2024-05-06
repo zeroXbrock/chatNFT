@@ -31,7 +31,7 @@ echo -e "L1 Signer:\t\t$L1_ADDRESS"
 l1Balance=$(cast balance -r $L1_RPC_HTTP $L1_ADDRESS)
 echo -e "L1 Balance:\t\t$(cast from-wei $l1Balance) ETH"
 
-if [[ "$l1Balance" < "$(cast to-wei 40)" ]]; then
+if [[ "$l1Balance" < "$(cast to-wei 1)" ]]; then
     echo "Transferring 10 ETH to L1 signer..."
     cast send -r $L1_RPC_HTTP \
         --value 10ether \
@@ -45,9 +45,9 @@ forge build
 
 # deploy contracts from chatGPT-nft-minter example
 ChatNFTAddress=$(forge create --json -r $SUAVE_RPC_HTTP --private-key $SUAVE_PRIVATE_KEY \
-    ./suave/ChatNFT.sol:ChatNFT | jq -r '.deployedTo')
+    ./src/suave/ChatNFT.sol:ChatNFT | jq -r '.deployedTo')
 NFTEEAddress=$(forge create --json --legacy -r $L1_RPC_HTTP --private-key $L1_PRIVATE_KEY \
-    ./ethL1/NFTEE2.sol:SuaveNFT --constructor-args $L1_ADDRESS | jq -r '.deployedTo')
+    ./src/ethL1/NFTEE2.sol:SuaveNFT --constructor-args $L1_ADDRESS | jq -r '.deployedTo')
 
 echo -e "ChatNFT Address:\t$ChatNFTAddress"
 echo -e "NFTEE Address:\t\t$NFTEEAddress"
