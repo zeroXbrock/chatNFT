@@ -126,7 +126,9 @@ function App() {
     const decoded = hexToString(content)
       .replace(/\\\\/g, '\\')
       .replace(/\\n/g, '\n')
-      .replace("\ ", "")
+      .replace(/\0/g, '')
+      .replace(/\034/g, '')
+      .replace("\ ", '')
     return decoded.split('\n').map((line, i) => (
       <div key={`line_${i + 1}`}><code style={{ whiteSpace: "pre" }}>{line}</code></div>
     ))
