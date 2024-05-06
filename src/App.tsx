@@ -96,7 +96,7 @@ function App() {
       throw new Error("Suave wallet not initialized")
     }
     const mintRequest = new MintRequest(
-      suaveWallet.account.address,
+      l1Wallet.account.address,
       config.l1PrivateKey,
       prompts,
     )
