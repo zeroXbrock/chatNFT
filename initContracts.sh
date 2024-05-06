@@ -47,7 +47,7 @@ forge build
 ChatNFTAddress=$(forge create --json -r $SUAVE_RPC_HTTP --private-key $SUAVE_PRIVATE_KEY \
     ./src/suave/ChatNFT.sol:ChatNFT | jq -r '.deployedTo')
 NFTEEAddress=$(forge create --json --legacy -r $L1_RPC_HTTP --private-key $L1_PRIVATE_KEY \
-    ./src/ethL1/NFTEE2.sol:SuaveNFT --constructor-args $L1_ADDRESS | jq -r '.deployedTo')
+    ./src/ethL1/NFTEE2.sol:SuaveNFT | jq -r '.deployedTo')
 
 echo -e "ChatNFT Address:\t$ChatNFTAddress"
 echo -e "NFTEE Address:\t\t$NFTEEAddress"
