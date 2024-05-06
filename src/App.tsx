@@ -113,12 +113,17 @@ function App() {
 
   const renderNFT = async (tokenId: bigint) => {
     console.debug("Rendering NFT", tokenId)
-    const nft = await readNFT(l1Provider, tokenId)
+    const { nft, svg } = await readNFT(l1Provider, tokenId)
     if (!nft.data) {
       console.error("NFT not found", tokenId)
       throw new Error("NFT not found")
     }
+    if (!svg.data) {
+      console.error("NFT not found", tokenId)
+      throw new Error("NFT not found")
+    }
     console.log("nft data", hexToString(nft.data))
+    console.log("svg", hexToString(svg.data))
     setNftContent(nft.data)
   }
 
@@ -128,6 +133,7 @@ function App() {
       .replace(/\\n/g, '\n')
       .replace(/\0/g, '')
       .replace(/\034/g, '')
+      .replace(/\035/g, '')
       .replace("\ ", '')
     return decoded.split('\n').map((line, i) => (
       <div key={`line_${i + 1}`}><code style={{ whiteSpace: "pre" }}>{line}</code></div>
