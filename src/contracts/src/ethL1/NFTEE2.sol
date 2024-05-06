@@ -95,7 +95,7 @@ contract SuaveNFT is ERC721 {
                     string(
                         abi.encodePacked(
                             '<svg height="200" width="200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">',
-                            '<rect height="500" width="500" fill=hsl(,50%,25%)" />',
+                            '<rect height="500" width="500" fill="hsl(,50%,25%)" />',
                             '<text dominant-baseline="middle" text-anchor="left" x="10%" y="10%" font-size="16" fill="hsl(45,100%,100%)">',
                             content,
                             "</text></svg>"
