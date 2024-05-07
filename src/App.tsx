@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { SuaveWallet, TransactionReceiptSuave, getSuaveProvider, getSuaveWallet } from '@flashbots/suave-viem/chains/utils'
-import { Address, CustomTransport, Hex, createPublicClient, createWalletClient, custom, hexToString, http } from '@flashbots/suave-viem'
+import { Address, CustomTransport, Hex, createPublicClient, createWalletClient, custom, decodeAbiParameters, hexToString, http } from '@flashbots/suave-viem'
 import config from './config'
 import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
@@ -30,6 +30,7 @@ function App() {
   }))
   const [nftContent, setNftContent] = useState<Hex>()
   const [tokenId, setTokenId] = useState<bigint>()
+  const [nftUri, setNftUri] = useState<string>()
 
   useEffect(() => {
     const load = async () => {
@@ -123,8 +124,15 @@ function App() {
       throw new Error("NFT not found")
     }
     console.log("nft data", hexToString(nft.data))
-    console.log("svg", hexToString(svg.data))
     setNftContent(nft.data)
+    try {
+      const [uri] = decodeAbiParameters([{ type: "string" }], svg.data)
+      const safeUri = encodeURI(uri)
+      console.log(safeUri)
+      setNftUri(safeUri)
+    } catch {
+      console.error("Failed to decode SVG URI from abi params")
+    }
   }
 
   const renderedNFT = (content: Hex) => {
@@ -146,6 +154,14 @@ function App() {
     }
     setPrompts([...prompts, promptInput])
     setPromptInput("")
+  }
+
+  const onViewRawNFT = () => {
+    if (!nftUri) {
+      return alert("No NFT URI found")
+    }
+    const w = window.open()
+    w?.document.write(`<iframe src=${nftUri}></iframe>`)
   }
 
   return (
@@ -197,6 +213,9 @@ function App() {
           <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
           <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
           <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
+          {!!nftUri && <button style={{ width: "max-content", margin: 12, marginTop: 12 }} onClick={onViewRawNFT}>
+            View Raw NFT
+          </button>}
           {!!tokenId && <div style={{ margin: 16, width: "100%", textAlign: "center" }} className='text-lg'>
             Token ID: {tokenId.toString()}
           </div>}

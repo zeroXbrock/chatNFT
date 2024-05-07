@@ -16,9 +16,17 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 ANVIL_FUNDED_KEY=0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
 SUAVE_PRIVATE_KEY=0x91ab9a7e53c220e6210460b65a7a3bb2ca181412a8a7b43ff336b3df1737ce12
-SUAVE_RPC_HTTP=http://localhost:8545
 L1_PRIVATE_KEY=0x6c45335a22461ccdb978b78ab61b238bad2fae4544fb55c14eb096c875ccfc52
+SUAVE_RPC_HTTP=http://localhost:8545
 L1_RPC_HTTP=http://localhost:8555
+#SUAVE_RPC_HTTP=https://rpc.rigil.suave.flashbots.net
+#L1_RPC_HTTP=https://rpc-holesky.flashbots.net
+
+# check for existence of SUAVE_PRIVATE_KEY and L1_PRIVATE_KEY
+if [ -z "$SUAVE_PRIVATE_KEY" ] || [ -z "$L1_PRIVATE_KEY" ]; then
+    echo "Please set SUAVE_PRIVATE_KEY and L1_PRIVATE_KEY in your environment."
+    exit 1
+fi
 
 SUAVE_ADDRESS=$(cast wallet address $SUAVE_PRIVATE_KEY)
 L1_ADDRESS=$(cast wallet address $L1_PRIVATE_KEY)
@@ -44,7 +52,8 @@ cd src/contracts
 forge build
 
 # deploy contracts from chatGPT-nft-minter example
-ChatNFTAddress=$(forge create --json -r $SUAVE_RPC_HTTP --private-key $SUAVE_PRIVATE_KEY \
+ChatNFTAddress=$(forge create --json --legacy -r $SUAVE_RPC_HTTP --private-key $SUAVE_PRIVATE_KEY \
+    --gas-price 4000000000 \
     ./src/suave/ChatNFT.sol:ChatNFT | jq -r '.deployedTo')
 NFTEEAddress=$(forge create --json --legacy -r $L1_RPC_HTTP --private-key $L1_PRIVATE_KEY \
     ./src/ethL1/NFTEE2.sol:SuaveNFT | jq -r '.deployedTo')
