@@ -1,1 +1,2 @@
 openzeppelin/=lib/openzeppelin-contracts/contracts/
+suavelib/=lib/suave-std/lib/

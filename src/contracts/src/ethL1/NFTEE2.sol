@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {ERC721} from "solmate/tokens/ERC721.sol";
-import {LibString} from "solmate/utils/LibString.sol";
+import {LibString} from "suavelib/solady/src/utils/LibString.sol";
 // import {Base64} from "openzeppelin/utils/Base64.sol";
 
 /// @title SuaveNFT
