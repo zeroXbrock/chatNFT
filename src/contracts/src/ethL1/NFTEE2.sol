@@ -123,8 +123,7 @@ contract SuaveNFT is ERC721 {
                 );
     }
 
-    /// Hijack `tokenURI` function to comply w/ ERC721 standard,
-    /// but we're using it to encode the token data into an SVG.
+    /// Encode tokenData into a data URI.
     function tokenURI(
         uint256 tokenId
     ) public view virtual override returns (string memory) {
