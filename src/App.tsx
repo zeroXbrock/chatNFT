@@ -220,7 +220,13 @@ function App() {
       </div>
       <div className="footer">
         <div>L1 NFT Address: {config.nfteeAddress}</div>
-        <div>Connected Wallet: {suaveWallet?.account.address}</div>
+        <div style={{ display: "flex", flexDirection: "column", textAlign: "right" }}>
+          <div>Connected Wallet: {suaveWallet?.account.address}</div>
+          {l1Wallet.account.address.toLowerCase() !== suaveWallet?.account.address.toLowerCase() &&
+            <div style={{ color: "#fa5949" }}>
+              L1 Wallet: {l1Wallet.account.address}
+            </div>}
+        </div>
       </div>
     </div>
   )
