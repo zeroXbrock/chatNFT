@@ -106,21 +106,23 @@ contract SuaveNFT is ERC721 {
     //         );
     // }
 
+    /// Re-escape characters in tokenData for use in a data URI.
     function cleanTokenData(
         string memory _tokenData
     ) private pure returns (string memory) {
         return
             _tokenData
                 .replace(
-                    // need this comment to keep multi-line formatting
+                    // need this comment to keep backslashes from breaking my formatter
                     "\\\\",
-                    "\\"
+                    "%5C"
                 )
                 .replace(
                     // my solidity formatter doesn't like these escape sequences
                     "\\n",
-                    "\n"
-                );
+                    "%0A"
+                )
+                .replace(" ", "%20");
     }
 
     /// Encode tokenData into a data URI.

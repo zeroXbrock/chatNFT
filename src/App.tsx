@@ -114,24 +114,23 @@ function App() {
 
   const renderNFT = async (tokenId: bigint) => {
     console.debug("Rendering NFT", tokenId)
-    const { nft, svg } = await readNFT(l1Provider, tokenId)
+    const { nft, uri } = await readNFT(l1Provider, tokenId)
     if (!nft.data) {
       console.error("NFT not found", tokenId)
       throw new Error("NFT not found")
     }
-    if (!svg.data) {
+    if (!uri.data) {
       console.error("NFT not found", tokenId)
       throw new Error("NFT not found")
     }
     console.log("nft data", hexToString(nft.data))
     setNftContent(nft.data)
     try {
-      const [uri] = decodeAbiParameters([{ type: "string" }], svg.data)
-      const safeUri = encodeURI(uri)
-      console.log(safeUri)
-      setNftUri(safeUri)
+      const [decodedUri] = decodeAbiParameters([{ type: "string" }], uri.data)
+      console.log("decoded URI", decodedUri)
+      setNftUri(decodedUri)
     } catch {
-      console.error("Failed to decode SVG URI from abi params")
+      console.error("Failed to decode URI from abi params")
     }
   }
 
@@ -158,7 +157,7 @@ function App() {
       return alert("No NFT URI found")
     }
     const w = window.open()
-    w?.document.write(`<iframe src=${nftUri}></iframe>`)
+    w?.document.write(`<iframe src="${nftUri}"></iframe>`)
   }
 
   return (
