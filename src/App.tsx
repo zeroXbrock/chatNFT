@@ -136,13 +136,10 @@ function App() {
   }
 
   const renderedNFT = (content: Hex) => {
-    const decoded = hexToString(content)
+    const [decodedContent] = decodeAbiParameters([{ type: "string" }], content)
+    const decoded = decodedContent
       .replace(/\\\\/g, '\\')
       .replace(/\\n/g, '\n')
-      .replace(/\0/g, '')
-      .replace(/\034/g, '')
-      .replace(/\035/g, '')
-      .replace("\ ", '')
     return decoded.split('\n').map((line, i) => (
       <div key={`line_${i + 1}`}><code style={{ whiteSpace: "pre" }}>{line}</code></div>
     ))
