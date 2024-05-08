@@ -9,6 +9,7 @@ import {LibString} from "suavelib/solady/src/utils/LibString.sol";
 /// @notice Contract to mint ERC-721 tokens with a signed EIP-712 message
 contract SuaveNFT is ERC721 {
     using LibString for uint256;
+    using LibString for string;
 
     string private baseUri;
 
@@ -105,6 +106,23 @@ contract SuaveNFT is ERC721 {
     //         );
     // }
 
+    function cleanTokenData(
+        string memory _tokenData
+    ) private pure returns (string memory) {
+        return
+            _tokenData
+                .replace(
+                    // need this comment to keep multi-line formatting
+                    "\\\\",
+                    "\\"
+                )
+                .replace(
+                    // my solidity formatter doesn't like these escape sequences
+                    "\\n",
+                    "\n"
+                );
+    }
+
     /// Hijack `tokenURI` function to comply w/ ERC721 standard,
     /// but we're using it to encode the token data into an SVG.
     function tokenURI(
@@ -118,7 +136,7 @@ contract SuaveNFT is ERC721 {
             string(
                 abi.encodePacked(
                     "data:text/plain;charset=utf-8,",
-                    tokenData[tokenId]
+                    cleanTokenData(tokenData[tokenId])
                 )
             );
         // // ERC721Metadata for OpenSea if we decide to get fancy
