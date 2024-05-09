@@ -160,6 +160,8 @@ function App() {
     w?.document.write(`<iframe src="${nftUri}"></iframe>`)
   }
 
+  const buttonText = "text-[#f0fff0]"
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
       {isLoading && <div className="loading">
@@ -176,14 +178,14 @@ function App() {
               onAddPrompt()
             }}>
               <input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput} onChange={e => setPromptInput(e.target.value)} style={{ width: "100%" }} />
-              <div className="text-[#f0fff0]" style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
+              <div className={buttonText} style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
             </form>
           </div>
         </div>
         {prompts.length > 0 && <div className="flex flex-col" style={{ width: "100%", alignItems: "flex-start", border: "1px dotted white", padding: 12 }}>
           <div className="flex flex-row" style={{ width: "100%" }}>
             <div style={{ textAlign: 'left', paddingLeft: 32, paddingTop: 16 }} className='basis-1/4 text-xl'>Your Prompts</div>
-            <div className='basis-3/4 text-xl text-[#f0fff0] flex flex-col' style={{ alignItems: "flex-end" }}>
+            <div className={`basis-3/4 text-xl ${buttonText} flex flex-col`} style={{ alignItems: "flex-end" }}>
               <button style={{ width: "min-content" }} onClick={() => {
                 setPrompts([])
               }} type='button'>Clear</button>
@@ -200,16 +202,14 @@ function App() {
                 ))}
               </ul>
             </div>
-            <br />
-            <br />
           </div>
-          {suaveTxHash && !nftContent && <div>SUAVE Tx Hash: {suaveTxHash}</div>}
+          {suaveTxHash && <div>SUAVE Tx Hash: {suaveTxHash}</div>}
         </div>}
         {nftContent && <div className="nftFrameContainer">
           <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
           <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
           <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
-          {!!nftUri && <button style={{ width: "max-content", margin: 12, marginTop: 12 }} onClick={onViewRawNFT}>
+          {!!nftUri && <button className={buttonText} style={{ width: "max-content", margin: 12, marginTop: 12 }} onClick={onViewRawNFT}>
             View Raw NFT
           </button>}
           {!!tokenId && <div style={{ margin: 16, width: "100%", textAlign: "center" }} className='text-lg'>
