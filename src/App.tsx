@@ -176,7 +176,7 @@ function App() {
               onAddPrompt()
             }}>
               <input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput} onChange={e => setPromptInput(e.target.value)} style={{ width: "100%" }} />
-              <div style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
+              <div className="text-[#f0fff0]" style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
             </form>
           </div>
         </div>
