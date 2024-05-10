@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {LibString} from "suavelib/solady/src/utils/LibString.sol";
-// import {Base64} from "openzeppelin/utils/Base64.sol";
 
 /// @title SuaveNFT
 /// @notice Contract to mint ERC-721 tokens with a signed EIP-712 message
@@ -89,23 +88,6 @@ contract SuaveNFT is ERC721 {
         return keccak256(bytes(tokenData[tokenId])) != keccak256("");
     }
 
-    // function renderSVG(string memory content) public pure returns (string memory) {
-    //     return
-    //         Base64.encode(
-    //             bytes(
-    //                 string(
-    //                     abi.encodePacked(
-    //                         '<svg height="200" width="200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">',
-    //                         '<rect height="500" width="500" fill="hsl(,50%,25%)" />',
-    //                         '<text dominant-baseline="middle" text-anchor="left" x="10%" y="10%" font-size="16" fill="hsl(45,100%,100%)">',
-    //                         content,
-    //                         "</text></svg>"
-    //                     )
-    //                 )
-    //             )
-    //         );
-    // }
-
     /// Re-escape characters in tokenData for use in a data URI.
     function cleanTokenData(
         string memory _tokenData
@@ -141,28 +123,4 @@ contract SuaveNFT is ERC721 {
                 )
             );
     }
-
-    // // ERC721Metadata for OpenSea if we decide to get fancy
-    // string(
-    //     abi.encodePacked(
-    //         "data:application/json;base64,",
-    //         Base64.encode(
-    //             bytes(
-    //                 abi.encodePacked(
-    //                     '{"name":"',
-    //                     NAME,
-    //                     " #",
-    //                     tokenId.toString(),
-    //                     '",',
-    //                     '"description":"',
-    //                     tokenData[tokenId],
-    //                     '",',
-    //                     '"image_data": "data:image/svg+xml;base64,',
-    //                     uri,
-    //                     '"}'
-    //                 )
-    //             )
-    //         )
-    //     )
-    // );
 }
