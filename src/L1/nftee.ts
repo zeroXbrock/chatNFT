@@ -20,7 +20,16 @@ export async function readNFT(
     // GET, it returns ERC721Metadata{name, description, image}.
     // Then make a GET request to the URL at `metadata.image` to
     // get an SVG rendered from the NFT's onchain data.
-    return nft
+    const uri = await ethProvider.call({
+        to:config.nfteeAddress,
+        data: encodeFunctionData({
+            abi: NFTEE.abi,
+            functionName: 'tokenURI',
+            args: [tokenId],
+        })
+    })
+
+    return {nft, uri}
 }
 
 /** Mint an NFT on L1.
