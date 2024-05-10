@@ -8,9 +8,13 @@ import { parseChatNFTLogs } from './suave/nft'
 import { privateKeyToAccount } from '@flashbots/suave-viem/accounts'
 import { L1 } from './L1/chain'
 import { mintNFT, readNFT } from './L1/nftee'
+import { suaveRigil } from '@flashbots/suave-viem/chains'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
-type EthereumProvider = { request(...args: any): Promise<any> }
+type EthereumProvider = {
+  request(...args: any): Promise<any>,
+  on(e: string, handler: (chainId: string) => any): void,
+}
 
 function App() {
   const [isLoading, setIsLoading] = useState(false)
@@ -31,11 +35,36 @@ function App() {
   const [nftContent, setNftContent] = useState<Hex>()
   const [tokenId, setTokenId] = useState<bigint>()
   const [nftUri, setNftUri] = useState<string>()
+  const [chainId, setChainId] = useState<string>()
+
+  const uiDisabled = (_chainId?: string) => {
+    const id = _chainId || chainId
+    return id !== `0x${suaveRigil.id.toString(16)}`
+  }
+
+  const alertBadChain = () => {
+    setChainId(undefined)
+    alert("Please switch to a SUAVE RPC to continue.")
+  }
 
   useEffect(() => {
     const load = async () => {
       if ('ethereum' in window) {
         const ethereum = window.ethereum as EthereumProvider
+        ethereum.on("chainChanged", (chainId) => {
+          if (uiDisabled(chainId)) {
+            alertBadChain()
+          } else {
+            setChainId(chainId)
+          }
+        })
+        if (!chainId) {
+          const chainId = await ethereum.request({ method: 'eth_chainId' })
+          if (uiDisabled(chainId)) {
+            alertBadChain()
+            return
+          }
+        }
         const accounts: Address[] = await ethereum.request({ method: 'eth_requestAccounts' })
         setSuaveWallet(getSuaveWallet({
           transport: custom(ethereum as EthereumProvider),
@@ -46,7 +75,7 @@ function App() {
       }
     }
     load()
-  }, [])
+  }, [chainId])
 
   const onMint = async () => {
     if (!suaveWallet) {
@@ -99,7 +128,7 @@ function App() {
     const mintRequest = new MintRequest(
       l1Wallet.account.address,
       config.l1PrivateKey,
-      prompts,
+      prompts.map(p => escapeHtml(p)),
     )
     const ccr = mintRequest.confidentialRequest()
     const txHash = await suaveWallet.sendTransaction(ccr)
@@ -177,12 +206,20 @@ function App() {
               e.preventDefault()
               onAddPrompt()
             }}>
-              <input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput} onChange={e => setPromptInput(e.target.value)} style={{ width: "100%" }} />
-              <div className={buttonText} style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
+              <input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput}
+                onChange={e => setPromptInput(e.target.value)}
+                style={{ width: "100%" }}
+                disabled={uiDisabled()} />
+              <div className={buttonText} style={{ width: "100%" }}><button type='submit' disabled={uiDisabled()}>Add Prompt</button></div>
             </form>
           </div>
         </div>
-        {prompts.length > 0 && <div className="flex flex-col" style={{ width: "100%", alignItems: "flex-start", border: "1px dotted white", padding: 12 }}>
+        {prompts.length > 0 && <div className="flex flex-col" style={{
+          width: "100%",
+          alignItems: "flex-start",
+          border: "1px dotted white",
+          padding: 12
+        }}>
           <div className="flex flex-row" style={{ width: "100%" }}>
             <div style={{ textAlign: 'left', paddingLeft: 32, paddingTop: 16 }} className='basis-1/4 text-xl'>Your Prompts</div>
             <div className={`basis-3/4 text-xl ${buttonText} flex flex-col`} style={{ alignItems: "flex-end" }}>
@@ -193,7 +230,7 @@ function App() {
           </div>
           <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
             <div className='basis-1/4'>
-              <button type='button' className='button-secondary' onClick={onMint}>Mint NFT</button>
+              <button type='button' className='button-secondary' onClick={onMint} disabled={uiDisabled()}>Mint NFT</button>
             </div>
             <div className='basis-3/4'>
               <ul className='list-disc' style={{ textAlign: "left", paddingLeft: 64 }}>
@@ -229,6 +266,21 @@ function App() {
       </div>
     </div>
   )
+}
+
+function escapeHtml(text: string) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+    "`": '&#96;',
+  } as const;
+
+  return text.replace(/[&<>"']/g, (m) => {
+    return map[m as '&' | '<' | '>' | '"' | "'"];
+  });
 }
 
 export default App

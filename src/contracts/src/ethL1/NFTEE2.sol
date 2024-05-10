@@ -140,28 +140,29 @@ contract SuaveNFT is ERC721 {
                     cleanTokenData(tokenData[tokenId])
                 )
             );
-        // // ERC721Metadata for OpenSea if we decide to get fancy
-        // string(
-        //     abi.encodePacked(
-        //         "data:application/json;base64,",
-        //         Base64.encode(
-        //             bytes(
-        //                 abi.encodePacked(
-        //                     '{"name":"',
-        //                     NAME,
-        //                     " #",
-        //                     tokenId.toString(),
-        //                     '",',
-        //                     '"description":"',
-        //                     tokenData[tokenId],
-        //                     '",',
-        //                     '"image_data": "data:image/svg+xml;base64,',
-        //                     uri,
-        //                     '"}'
-        //                 )
-        //             )
-        //         )
-        //     )
-        // );
     }
+
+    // // ERC721Metadata for OpenSea if we decide to get fancy
+    // string(
+    //     abi.encodePacked(
+    //         "data:application/json;base64,",
+    //         Base64.encode(
+    //             bytes(
+    //                 abi.encodePacked(
+    //                     '{"name":"',
+    //                     NAME,
+    //                     " #",
+    //                     tokenId.toString(),
+    //                     '",',
+    //                     '"description":"',
+    //                     tokenData[tokenId],
+    //                     '",',
+    //                     '"image_data": "data:image/svg+xml;base64,',
+    //                     uri,
+    //                     '"}'
+    //                 )
+    //             )
+    //         )
+    //     )
+    // );
 }
