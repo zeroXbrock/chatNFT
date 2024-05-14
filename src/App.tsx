@@ -51,18 +51,20 @@ function App() {
     const load = async () => {
       if ('ethereum' in window) {
         const ethereum = window.ethereum as EthereumProvider
-        ethereum.on("chainChanged", (chainId) => {
-          if (uiDisabled(chainId)) {
+        ethereum.on("chainChanged", (chainId_) => {
+          if (uiDisabled(chainId_)) {
             alertBadChain()
           } else {
-            setChainId(chainId)
+            setChainId(chainId_)
           }
         })
         if (!chainId) {
-          const chainId = await ethereum.request({ method: 'eth_chainId' })
-          if (uiDisabled(chainId)) {
+          const chainId_ = await ethereum.request({ method: 'eth_chainId' })
+          if (uiDisabled(chainId_)) {
             alertBadChain()
             return
+          } else {
+            setChainId(chainId_)
           }
         }
         const accounts: Address[] = await ethereum.request({ method: 'eth_requestAccounts' })
