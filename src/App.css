@@ -52,3 +52,7 @@
   margin: 1em 0;
   box-shadow: 0 0 8px #00000017;
 }
+
+.button-default {
+  width: max-content;
+}

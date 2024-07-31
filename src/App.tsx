@@ -249,12 +249,24 @@ function App() {
           <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
           <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
           <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
-          {!!nftUri && <button className={buttonText} style={{ width: "max-content", margin: 12, marginTop: 12 }} onClick={onViewRawNFT}>
-            View Raw NFT
-          </button>}
-          {!!tokenId && <div style={{ margin: 16, width: "100%", textAlign: "center" }} className='text-lg'>
-            Token ID: {tokenId.toString()}
-          </div>}
+          <div className='blocking-alert' style={{ margin: 12, marginTop: 24 }}>
+            {!!nftUri &&
+              <button className='button-default'
+                onClick={onViewRawNFT}>
+                <a className={`${buttonText} font-mono`}>
+                  View Raw NFT
+                </a>
+              </button>}
+            {!!tokenId &&
+              <button className='button-default'>
+                <a
+                  href={`https://holesky.etherscan.io/token/${config.nfteeAddress}?a=${tokenId}`}
+                  className={`${buttonText} font-mono`}
+                  target='_blank'
+                >View on Etherscan
+                </a>
+              </button>}
+          </div>
         </div>}
       </div>
       <div className="footer">
