@@ -15,11 +15,13 @@ import {Emitter} from "./712Emitter2.sol";
 /// any bytes-encoded data.
 contract ChatNFT is Suapp {
     address public admin;
+    address private owner;
     Suave.DataId private openAIKeyDataId;
     Suave.DataId private adminSignerKeyDataId;
 
-    constructor() {
-        admin = msg.sender;
+    constructor(address _admin) {
+        admin = _admin;
+        owner = msg.sender;
     }
 
     /// Require function to be called via confidential compute request.
@@ -29,7 +31,7 @@ contract ChatNFT is Suapp {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == admin, "only admin can call this function");
+        require(msg.sender == owner, "only owner can call this function");
         _;
     }
 

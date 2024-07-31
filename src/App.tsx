@@ -47,7 +47,7 @@ function App() {
         setSuaveWallet(getSuaveWallet({
           transport: custom(ethereum as EthereumProvider),
           jsonRpcAccount: accounts[0],
-          customRpc: config.suaveRpcHttp
+          customRpc: config.suaveRpcHttp,
         }))
       } else {
         alert("Browser wallet not found. Please install one to continue.")
