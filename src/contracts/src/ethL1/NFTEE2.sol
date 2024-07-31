@@ -9,11 +9,13 @@ import {LibString} from "suavelib/solady/src/utils/LibString.sol";
 contract SuaveNFT is ERC721 {
     using LibString for uint256;
     using LibString for string;
+    using LibString for address;
 
     string private baseUri;
+    address public admin;
 
     // Event declarations
-    event NFTMintedEvent(address indexed recipient, uint256 indexed tokenId);
+    event NFTMintedEvent(uint256 indexed tokenId);
 
     // EIP-712 Domain Separator
     // keccak256(abi.encode(keccak256("EIP712Domain(string name,string symbol,uint256 chainId,address verifyingContract)"),keccak256(bytes(NAME)),keccak256(bytes(SYMBOL)),block.chainid,address(this))
@@ -32,33 +34,41 @@ contract SuaveNFT is ERC721 {
     string public constant NAME = "SUAVE_NFT2";
     string public constant SYMBOL = "NFTEE";
 
-    constructor() ERC721(NAME, SYMBOL) {}
+    constructor(address _admin) ERC721(NAME, SYMBOL) {
+        admin = _admin;
+    }
 
     // Mint NFT with a signed EIP-712 message
     function mintNFTWithSignature(
         uint256 tokenId,
-        address recipient,
         string memory content,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) external {
         require(
-            verifyEIP712Signature(tokenId, recipient, content, v, r, s),
+            verifyEIP712Signature(
+                tokenId,
+                msg.sender,
+                abi.encodePacked(content),
+                v,
+                r,
+                s
+            ),
             "INVALID_SIGNATURE"
         );
 
-        _safeMint(recipient, tokenId);
+        _safeMint(msg.sender, tokenId);
         tokenData[tokenId] = content;
 
-        emit NFTMintedEvent(recipient, tokenId);
+        emit NFTMintedEvent(tokenId);
     }
 
     // Verify EIP-712 signature
     function verifyEIP712Signature(
         uint256 tokenId,
         address recipient,
-        string memory content,
+        bytes memory content,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -73,15 +83,16 @@ contract SuaveNFT is ERC721 {
                         keccak256(bytes(NAME)),
                         keccak256(bytes(SYMBOL)),
                         tokenId,
+                        admin,
                         recipient,
-                        keccak256(bytes(content))
+                        keccak256(content)
                     )
                 )
             )
         );
 
         address recovered = ecrecover(digestHash, v, r, s);
-        return recovered == recipient;
+        return recovered == admin;
     }
 
     function _exists(uint256 tokenId) internal view returns (bool) {

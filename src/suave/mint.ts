@@ -1,22 +1,14 @@
 import config from "../config"
-import { Address, Hex, encodeFunctionData, parseGwei } from '@flashbots/suave-viem'
+import { Address, encodeFunctionData } from '@flashbots/suave-viem'
 import { encodeAbiParameters } from '@flashbots/suave-viem/abi'
 import { TransactionRequestSuave } from '@flashbots/suave-viem/chains/utils'
 import ChatNFT from '../contracts/out/ChatNFT.sol/ChatNFT.json'
 
-const mintAbi = /*
-struct MintNFTConfidentialParams {
-  {type: 'bytes', name: 'privateKey'}
-  {type: 'address', name: 'recipient'}
-  {type: 'string[]', name: 'prompts'}
-  {type: 'string', name: 'openaiApiKey'}
-}*/
+const mintAbi = 
 [{
   components: [
-    {name: 'privateKey', type: 'string'},
     {name: 'recipient', type: 'address'},
     {name: 'prompts', type: 'string[]'},
-    {name: 'openaiApiKey', type: 'string'},
   ],
   name: 'MintNFTConfidentialParams',
   type: 'tuple',
@@ -25,24 +17,16 @@ struct MintNFTConfidentialParams {
 export class MintRequest {
     constructor(
         public readonly recipient: Address,
-        private readonly minterPrivateKey: Hex,
         public readonly prompts: string[],
     ) {
-        this.minterPrivateKey = minterPrivateKey
         this.recipient = recipient
         this.prompts = prompts
     }
 
     confidentialInputs() {
         return encodeAbiParameters(mintAbi, [{
-            privateKey: this.minterPrivateKey.substring(2), // this is bad.
-            // ^^^ something somewhere in the backend is expecting a string
-            // ^^^ without the 0x prefix, rather than abi-encoded bytes which
-            // ^^^ would be derived from our hex-string here.
-            // ^^^ At any rate, a production SUAPP wouldn't be doing this.
             recipient: this.recipient,
             prompts: this.prompts,
-            openaiApiKey: config.openaiApiKey,
         }])
     }
 
@@ -56,7 +40,6 @@ export class MintRequest {
                 functionName: 'mintNFT',
             }),
             gas: 5000000n,
-            gasPrice: parseGwei("10"),
             type: '0x43'
         }
     }
