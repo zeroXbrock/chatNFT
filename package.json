@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@flashbots/suave-viem": "^0.0.0-main.20240717T141236",
+    "@flashbots/suave-viem": "^0.0.0-main.20240731T114045",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
