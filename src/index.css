@@ -179,3 +179,7 @@ button:focus-visible {
   font-family: monospace;
   font-size: 1.13em;
 }
+
+.footer-link {
+  color: #221b;
+}

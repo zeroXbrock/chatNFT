@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { SuaveWallet, TransactionReceiptSuave, getSuaveProvider, getSuaveWallet } from '@flashbots/suave-viem/chains/utils'
-import { Address, CustomTransport, Hex, createPublicClient, createWalletClient, custom, decodeAbiParameters, hexToString, http } from '@flashbots/suave-viem'
+import { Address, CustomTransport, Hex, createPublicClient, createWalletClient, custom, decodeAbiParameters, hexToString, http, numberToHex } from '@flashbots/suave-viem'
 import config from './config'
 import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
 import { L1 } from './L1/chain'
 import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
+import { abbreviatedAddress, escapeHtml } from './util'
+import Notification from './components/notification'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 type EthereumProvider = {
@@ -18,7 +20,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [promptInput, setPromptInput] = useState<string>("")
   const [prompts, setPrompts] = useState<string[]>([])
-  const [suaveTxHash, setSuaveTxHash] = useState<string>()
   const [suaveWallet, setSuaveWallet] = useState<SuaveWallet<CustomTransport>>()
   const [suaveProvider] = useState(getSuaveProvider(http(config.suaveRpcHttp)))
   const [l1Provider] = useState(createPublicClient({
@@ -30,6 +31,7 @@ function App() {
   const [nftUri, setNftUri] = useState<string>()
   const [chainId, setChainId] = useState<string>()
   const [ethereum, setEthereum] = useState<EthereumProvider>()
+  const [notifications, setNotifications] = useState<Notification[]>([])
 
   useEffect(() => {
     const load = async () => {
@@ -81,19 +83,27 @@ function App() {
       const mintTxBase = mintNFT(tokenId, signature, queryResult)
       const mintTx = {
         ...mintTxBase,
-        gas: 500000n,
+        gas: 900000n,
         gasPrice: await l1Provider.getGasPrice(),
         nonce: await l1Provider.getTransactionCount({ address: l1Wallet.account.address }),
       }
 
       try {
         const mintTxHash = await l1Wallet.sendTransaction(mintTx)
+        setNotifications([...notifications, {
+          message: 'Minting NFT on L1',
+          href: `https://holesky.etherscan.io/tx/${mintTxHash}`,
+          linkText: abbreviatedAddress(mintTxHash),
+          id: mintTxHash,
+          timestamp: new Date().getTime()
+        } as Notification])
         console.log("Minting NFT on L1", mintTxHash)
         const l1Receipt = await l1Provider.waitForTransactionReceipt({ hash: mintTxHash })
         if (l1Receipt.status !== 'success') {
           console.error("L1 transaction failed", l1Receipt)
           throw new Error("L1 transaction failed")
         }
+        setNotifications(notifications.filter(n => n.id !== mintTxHash))
         console.log("L1 transaction succeeded", l1Receipt)
         const decodedLogs = decodeNFTEELogs(l1Receipt)
         console.debug("Decoded logs", decodedLogs)
@@ -120,12 +130,20 @@ function App() {
     )
     const ccr = mintRequest.confidentialRequest()
     const txHash = await suaveWallet.sendTransaction(ccr)
-    setSuaveTxHash(txHash)
+    setNotifications([...notifications, {
+      message: 'Creating NFT on SUAVE',
+      href: `https://explorer.toliman.suave.flashbots.net/tx/${txHash}`,
+      linkText: abbreviatedAddress(txHash),
+      id: txHash,
+      timestamp: new Date().getTime()
+    } as Notification])
+
     const receipt = await suaveProvider.waitForTransactionReceipt({ hash: txHash })
     if (receipt.status !== 'success') {
       console.error("Transaction failed", receipt)
       throw new Error("Transaction failed")
     }
+    setNotifications(notifications.filter(n => n.id !== txHash))
     return receipt
   }
 
@@ -184,6 +202,7 @@ function App() {
       {isLoading && <div className="loading">
         Loading
       </div>}
+      <Notification messages={notifications} />
       <div className="text-2xl font-medium">🌿 ChatNFT</div>
       <div className='text-sm'>Mint an NFT from a ChatGPT prompt. Powered by SUAVE.</div>
       <div className='container mx-auto app'>
@@ -218,7 +237,19 @@ function App() {
           </div>
           <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
             <div className='basis-1/4'>
-              {chainId && parseInt(chainId, 16) !== config.l1ChainId ? <div>Please connect your wallet to L1 {L1.name} to mint NFTs</div> :
+              {chainId && parseInt(chainId, 16) !== config.l1ChainId ?
+                <button className='subtle-alert text-sm' onClick={() => {
+                  ethereum?.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: numberToHex(config.l1ChainId) }] })
+                }}>
+                  <em>
+                    Connect your wallet to <span className='text-lime-300'>
+                      {["localhost", "127.0.0.1"].includes(config.l1RpcHttp)
+                        ?
+                        config.l1RpcHttp :
+                        "Holesky"}
+                    </span> to mint NFTs
+                  </em>
+                </button> :
                 <button type='button' className='button-secondary' onClick={onMint}>Mint NFT</button>
               }
             </div>
@@ -230,47 +261,62 @@ function App() {
               </ul>
             </div>
           </div>
-          {suaveTxHash && <div>SUAVE Tx Hash: {suaveTxHash}</div>}
         </div>}
         {nftContent && <div className="nftFrameContainer">
           <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
           <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
           <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
-          {!!nftUri && <button className={buttonText} style={{ width: "max-content", margin: 12, marginTop: 12 }} onClick={onViewRawNFT}>
-            View Raw NFT
-          </button>}
-          {!!tokenId && <div style={{ margin: 16, width: "100%", textAlign: "center" }} className='text-lg'>
-            Token ID: {tokenId.toString()}
-          </div>}
+          <div className='subtle-alert' style={{ margin: 12, marginTop: 24 }}>
+            {!!nftUri &&
+              <button className='button-default'
+                onClick={onViewRawNFT}>
+                <a className={`${buttonText} font-mono`}>
+                  View Raw NFT
+                </a>
+              </button>}
+            {!!tokenId &&
+              <button className='button-default'>
+                <a
+                  href={`https://holesky.etherscan.io/token/${config.nfteeAddress}?a=${tokenId}`}
+                  className={`${buttonText} font-mono`}
+                  target='_blank'
+                >View on Etherscan
+                </a>
+              </button>}
+          </div>
         </div>}
       </div>
-      <div className="footer">
-        <div>L1 NFT Address: {config.nfteeAddress}</div>
+      <div className="footer text-xs">
+        <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
+          <span>
+            L1 NFTEE: <a className='footer-link' href={`https://holesky.etherscan.io/address/${config.nfteeAddress}`} target='_blank'>
+              {abbreviatedAddress(config.nfteeAddress)}
+            </a>
+          </span>
+          <span>
+            SUAVE ChatNFT: <a className='footer-link' href={`https://explorer.toliman.suave.flashbots.net/address/${config.chatNftAddress}?tab=txs`} target='_blank'>
+              {abbreviatedAddress(config.chatNftAddress)}
+            </a>
+          </span>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", textAlign: "right" }}>
-          <div>Connected Wallet: {suaveWallet?.account.address}</div>
-          {suaveWallet?.account.address.toLowerCase() !== suaveWallet?.account.address.toLowerCase() &&
-            <div style={{ color: "#fa5949" }}>
-              L1 Wallet: {suaveWallet?.account.address}
-            </div>}
+          <span>
+            (Connected) {suaveWallet?.account.address}
+          </span>
+          <span>
+            <a className='footer-link' href={`https://holesky.etherscan.io/address/${suaveWallet?.account.address}`} target='_blank'>
+              Holesky
+            </a>
+            //
+            <a className='footer-link' href={`https://explorer.toliman.suave.flashbots.net/address/${suaveWallet?.account.address}?tab=txs`} target='_blank'>
+              Toliman
+            </a>
+          </span>
         </div>
       </div>
     </div>
   )
 }
 
-function escapeHtml(text: string) {
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-    "`": '&#96;',
-  } as const;
-
-  return text.replace(/[&<>"']/g, (m) => {
-    return map[m as '&' | '<' | '>' | '"' | "'"];
-  });
-}
 
 export default App
