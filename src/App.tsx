@@ -7,6 +7,7 @@ import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
 import { L1 } from './L1/chain'
 import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
+import { getGasPrice } from '@flashbots/suave-viem/actions'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 type EthereumProvider = {
@@ -81,6 +82,8 @@ function App() {
       const mintTxBase = mintNFT(tokenId, signature, queryResult)
       const mintTx = {
         ...mintTxBase,
+        gas: 500000n,
+        gasPrice: await getGasPrice(l1Provider),
         nonce: await l1Provider.getTransactionCount({ address: l1Wallet.account.address }),
       }
 
