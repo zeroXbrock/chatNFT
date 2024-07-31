@@ -56,3 +56,16 @@
 .button-default {
   width: max-content;
 }
+
+.notifications {
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  align-items: flex-end;
+  background-color: #0001;
+  z-index: 1001;
+}
