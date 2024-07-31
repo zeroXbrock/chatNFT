@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { SuaveWallet, TransactionReceiptSuave, getSuaveProvider, getSuaveWallet } from '@flashbots/suave-viem/chains/utils'
-import { Address, CustomTransport, Hex, createPublicClient, createWalletClient, custom, decodeAbiParameters, hexToString, http } from '@flashbots/suave-viem'
+import { Address, CustomTransport, Hex, createPublicClient, createWalletClient, custom, decodeAbiParameters, hexToString, http, numberToHex } from '@flashbots/suave-viem'
 import config from './config'
 import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
 import { L1 } from './L1/chain'
 import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
+import { escapeHtml } from './util'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 type EthereumProvider = {
@@ -218,7 +219,19 @@ function App() {
           </div>
           <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
             <div className='basis-1/4'>
-              {chainId && parseInt(chainId, 16) !== config.l1ChainId ? <div>Please connect your wallet to L1 {L1.name} to mint NFTs</div> :
+              {chainId && parseInt(chainId, 16) !== config.l1ChainId ?
+                <button className='blocking-alert text-sm' onClick={() => {
+                  ethereum?.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: numberToHex(config.l1ChainId) }] })
+                }}>
+                  <em>
+                    Connect your wallet to <span className='text-lime-300'>
+                      {["localhost", "127.0.0.1"].includes(config.l1RpcHttp)
+                        ?
+                        config.l1RpcHttp :
+                        "Holesky"}
+                    </span> to mint NFTs
+                  </em>
+                </button> :
                 <button type='button' className='button-secondary' onClick={onMint}>Mint NFT</button>
               }
             </div>
@@ -258,19 +271,5 @@ function App() {
   )
 }
 
-function escapeHtml(text: string) {
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-    "`": '&#96;',
-  } as const;
-
-  return text.replace(/[&<>"']/g, (m) => {
-    return map[m as '&' | '<' | '>' | '"' | "'"];
-  });
-}
 
 export default App
