@@ -65,24 +65,18 @@ export function mintNFT(
     if (vi <= 1) {
         vi += 27
     }
-    console.log({
+    console.debug({
         r,
         s,
         v,
         vi
     })
 
-    // content = content.replace(/\\\\/g, "\\")
-    // console.log("content", hexToString(content))
-    console.log("hash(content)", keccak256(stringToHex(content)))
-    console.log("content", content)
+    console.debug("hash(content)", keccak256(stringToHex(content)))
+    console.debug("content", content)
 
-    // const decodedQueryResult = content
-    // console.log('decodedQueryResult', `'${decodedQueryResult}'`)
     return {
         to: config.nfteeAddress,
-        gas: 2000000n,
-        gasPrice: 150n * (10n ** 9n),
         data: encodeFunctionData({
             abi: NFTEE.abi,
             functionName: 'mintNFTWithSignature',

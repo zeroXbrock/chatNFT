@@ -22,8 +22,7 @@ export async function parseChatNFTLogs(receipt: TransactionReceiptSuave) {
             } else if (log.topics[0] === topics[1]) {
                 queryResultLog = decodedLog
             } else {
-                console.log("Unknown log")
-                console.log(decodedLog)
+                console.debug("unknown log", decodedLog)
             }
         }
     }

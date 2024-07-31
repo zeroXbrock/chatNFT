@@ -32,7 +32,6 @@ function App() {
   const [ethereum, setEthereum] = useState<EthereumProvider>()
 
   useEffect(() => {
-    console.log("config", config)
     const load = async () => {
       if ('ethereum' in window) {
         const ethereum = window.ethereum as EthereumProvider
@@ -95,7 +94,7 @@ function App() {
         }
         console.log("L1 transaction succeeded", l1Receipt)
         const decodedLogs = decodeNFTEELogs(l1Receipt)
-        console.log("Decoded logs", decodedLogs)
+        console.debug("Decoded logs", decodedLogs)
       } catch (e) {
         alert(`Failed to mint NFT on L1: ${e}`)
         return setIsLoading(false)
