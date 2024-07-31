@@ -19,9 +19,12 @@ SUAVE_PRIVATE_KEY=0x91ab9a7e53c220e6210460b65a7a3bb2ca181412a8a7b43ff336b3df1737
 L1_PRIVATE_KEY=0x6c45335a22461ccdb978b78ab61b238bad2fae4544fb55c14eb096c875ccfc52
 SUAVE_RPC_HTTP=http://localhost:8545
 L1_RPC_HTTP=http://localhost:8555
+# signer key to upload to the ChatNFT contract; signs new NFT approvals; should not have a balance
+SIGNER_KEY=$SUAVE_PRIVATE_KEY
+SIGNER_ADDRESS=$(cast wallet address $SIGNER_KEY)
 #SUAVE_RPC_HTTP=https://rpc.rigil.suave.flashbots.net
 #L1_RPC_HTTP=https://rpc-holesky.flashbots.net
-
+echo -e "NFT Signer:\t\t$SIGNER_ADDRESS" 
 # check for existence of SUAVE_PRIVATE_KEY and L1_PRIVATE_KEY
 if [ -z "$SUAVE_PRIVATE_KEY" ] || [ -z "$L1_PRIVATE_KEY" ]; then
     echo "Please set SUAVE_PRIVATE_KEY and L1_PRIVATE_KEY in your environment."
@@ -32,6 +35,9 @@ SUAVE_ADDRESS=$(cast wallet address $SUAVE_PRIVATE_KEY)
 L1_ADDRESS=$(cast wallet address $L1_PRIVATE_KEY)
 echo -e "Suave Signer:\t\t$SUAVE_ADDRESS"
 echo -e "L1 Signer:\t\t$L1_ADDRESS"
+
+SUAVE_BALANCE=$(cast balance -r $SUAVE_RPC_HTTP $SUAVE_ADDRESS)
+echo -e "Suave balance:\t\t$SUAVE_BALANCE"
 
 # Check L1 wallet balance, transfer funds from a default account if needed.
 # This is assuming you're using anvil/hardhat for L1.
@@ -46,20 +52,37 @@ if [[ "$l1Balance" < "$(cast to-wei 1)" ]]; then
         --private-key $ANVIL_FUNDED_KEY \
         $L1_ADDRESS
 fi
+l1Balance=$(cast balance -r $L1_RPC_HTTP $L1_ADDRESS)
+echo -e "L1 Balance:\t\t$(cast from-wei $l1Balance) ETH"
 
 # build contracts & copy artifacts to src/abi/
 cd src/contracts
 forge build
 
-# deploy contracts from chatGPT-nft-minter example
+# deploy contracts
 ChatNFTAddress=$(forge create --json --legacy -r $SUAVE_RPC_HTTP --private-key $SUAVE_PRIVATE_KEY \
     --gas-price 4000000000 \
     ./src/suave/ChatNFT.sol:ChatNFT | jq -r '.deployedTo')
 NFTEEAddress=$(forge create --json --legacy -r $L1_RPC_HTTP --private-key $L1_PRIVATE_KEY \
-    ./src/ethL1/NFTEE2.sol:SuaveNFT | jq -r '.deployedTo')
+    ./src/ethL1/NFTEE2.sol:SuaveNFT --constructor-args "$SIGNER_ADDRESS" | jq -r '.deployedTo')
 
 echo -e "ChatNFT Address:\t$ChatNFTAddress"
 echo -e "NFTEE Address:\t\t$NFTEEAddress"
+
+# function to trim leading 0x from hex strings
+trim0x() {
+    echo $1 | sed 's/^0x//'
+}
+
+# register keys with ChatNFT contract
+suave spell conf-request \
+    --confidential-input $(cast abi-encode "x(string)" "$OPENAI_API_KEY") \
+    --private-key $(trim0x $SUAVE_PRIVATE_KEY) \
+    $ChatNFTAddress "_registerOpenAIKey()"
+suave spell conf-request \
+    --confidential-input $(cast abi-encode "x(string)" "$SIGNER_KEY") \
+    --private-key $(trim0x $SUAVE_PRIVATE_KEY) \
+    $ChatNFTAddress "_registerSignerKey()"
 
 # update .env with deployed contract addresses
 cd $SCRIPT_DIR

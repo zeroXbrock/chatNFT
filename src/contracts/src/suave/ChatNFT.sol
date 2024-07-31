@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import {Suave} from "suave-std/suavelib/Suave.sol";
+import {Suapp} from "suave-std/Suapp.sol";
+import {Context} from "suave-std/Context.sol";
 import {ChatGPT} from "suave-std/protocols/ChatGPT.sol";
 import {Emitter} from "./712Emitter2.sol";
 
@@ -11,56 +13,156 @@ import {Emitter} from "./712Emitter2.sol";
 /// @dev Once the user is satisfied with the query result, they can choose to
 /// create a new NFT with the query result. This can be an image, text;
 /// any bytes-encoded data.
-contract ChatNFT {
+contract ChatNFT is Suapp {
+    address public admin;
+    Suave.DataId private openAIKeyDataId;
+    Suave.DataId private adminSignerKeyDataId;
+
+    constructor() {
+        admin = msg.sender;
+    }
+
     /// Require function to be called via confidential compute request.
     modifier confidential() {
         require(Suave.isConfidential(), "must call confidentially");
         _;
     }
 
-    struct MintNFTConfidentialParams {
-        bytes privateKey;
-        address recipient;
-        string[] prompts;
-        string openaiApiKey;
+    modifier onlyOwner() {
+        require(msg.sender == admin, "only admin can call this function");
+        _;
     }
 
-    event QueryResult(bytes result);
+    struct MintNFTConfidentialParams {
+        address recipient;
+        string[] prompts;
+    }
+
+    event QueryResult(string result);
     event NFTCreated(uint256 tokenId, address recipient, bytes signature);
 
-    function newTokenId(string[] memory prompts) private view returns (uint256) {
-        return uint256(keccak256(abi.encode(prompts, block.timestamp, msg.sender)));
+    function onRegisterOpenAIKey(Suave.DataId recordId) public {
+        openAIKeyDataId = recordId;
+    }
+
+    function onRegisterSignerKey(Suave.DataId recordId) public {
+        adminSignerKeyDataId = recordId;
+    }
+
+    function _registerOpenAIKey()
+        public
+        confidential
+        onlyOwner
+        returns (bytes memory)
+    {
+        // must be an abi-encoded string
+        bytes memory apiKey = Context.confidentialInputs();
+        address[] memory peekers = new address[](2);
+        peekers[0] = admin;
+        peekers[1] = address(this);
+        Suave.DataRecord memory rec = Suave.newDataRecord(
+            0,
+            peekers,
+            peekers,
+            "chatNFT_openai-api-key"
+        );
+        Suave.confidentialStore(rec.id, "OPENAI_API_KEY", apiKey);
+        return
+            abi.encodeWithSelector(this.onRegisterOpenAIKey.selector, rec.id);
+    }
+
+    function _getOpenAIKey() private returns (string memory) {
+        return
+            abi.decode(
+                Suave.confidentialRetrieve(openAIKeyDataId, "OPENAI_API_KEY"),
+                (string)
+            );
+    }
+
+    function _registerSignerKey()
+        public
+        confidential
+        onlyOwner
+        returns (bytes memory)
+    {
+        // must be an abi-encoded string
+        bytes memory signerKey = Context.confidentialInputs();
+        address[] memory peekers = new address[](2);
+        peekers[0] = admin;
+        peekers[1] = address(this);
+        Suave.DataRecord memory rec = Suave.newDataRecord(
+            0,
+            peekers,
+            peekers,
+            "chatNFT_signer-key"
+        );
+        Suave.confidentialStore(rec.id, "SIGNER_KEY", signerKey);
+        return
+            abi.encodeWithSelector(this.onRegisterSignerKey.selector, rec.id);
+    }
+
+    function _getSignerKey() private returns (string memory) {
+        return
+            abi.decode(
+                Suave.confidentialRetrieve(adminSignerKeyDataId, "SIGNER_KEY"),
+                (string)
+            );
+    }
+
+    function newTokenId(
+        string[] memory prompts
+    ) private view returns (uint256) {
+        return
+            uint256(
+                keccak256(abi.encode(prompts, block.timestamp, msg.sender))
+            );
     }
 
     /// Logs the query result.
-    function onMintNFT(bytes memory queryResult, uint256 tokenId, address recipient, bytes memory signature) public {
-        emit QueryResult(queryResult);
-        emit NFTCreated(tokenId, recipient, signature);
-    }
+    function onMintNFT() public emitOffchainLogs {}
 
     /// Makes a query to ChatGPT with prompts given via confidentialInputs.
     /// Mints an NFT with the query result.
-    function mintNFT() public confidential returns (bytes memory suaveCalldata) {
+    function mintNFT()
+        public
+        confidential
+        returns (bytes memory suaveCalldata)
+    {
         // parse confidential inputs
         bytes memory cInputs = Suave.confidentialInputs();
-        MintNFTConfidentialParams memory cParams = abi.decode(cInputs, (MintNFTConfidentialParams));
+        MintNFTConfidentialParams memory cParams = abi.decode(
+            cInputs,
+            (MintNFTConfidentialParams)
+        );
         uint256 tokenId = newTokenId(cParams.prompts);
 
         // query ChatGPT
-        ChatGPT chatGPT = new ChatGPT(cParams.openaiApiKey);
-        ChatGPT.Message[] memory messages = new ChatGPT.Message[](cParams.prompts.length);
+        ChatGPT chatGPT = new ChatGPT(_getOpenAIKey());
+        ChatGPT.Message[] memory messages = new ChatGPT.Message[](
+            cParams.prompts.length
+        );
         for (uint256 i = 0; i < cParams.prompts.length; i++) {
-            messages[i] = ChatGPT.Message({role: ChatGPT.Role.User, content: cParams.prompts[i]});
+            messages[i] = ChatGPT.Message({
+                role: ChatGPT.Role.User,
+                content: cParams.prompts[i]
+            });
         }
         string memory queryResult = chatGPT.complete(messages);
 
-        // for signing NFT-minting approvals
-        // Emitter emitter = new Emitter();
-        bytes memory signature =
-            Emitter.signMintApproval(tokenId, cParams.recipient, string(queryResult), cParams.privateKey);
+        // sign a mint-approval for an NFT with the query result
+        string memory signerKey = _getSignerKey();
+        bytes memory signature = Emitter.signMintApproval(
+            tokenId,
+            admin,
+            cParams.recipient,
+            string(queryResult),
+            signerKey
+        );
 
-        // Callback emits the query result.
-        suaveCalldata =
-            abi.encodeWithSelector(this.onMintNFT.selector, queryResult, tokenId, cParams.recipient, signature);
+        emit QueryResult(queryResult);
+        emit NFTCreated(tokenId, cParams.recipient, signature);
+
+        // Callback triggers log emission
+        suaveCalldata = abi.encodeWithSelector(this.onMintNFT.selector);
     }
 }

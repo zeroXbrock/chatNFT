@@ -5,15 +5,13 @@ import { Address, CustomTransport, Hex, createPublicClient, createWalletClient, 
 import config from './config'
 import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
-import { privateKeyToAccount } from '@flashbots/suave-viem/accounts'
 import { L1 } from './L1/chain'
-import { mintNFT, readNFT } from './L1/nftee'
-import { suaveRigil } from '@flashbots/suave-viem/chains'
+import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 type EthereumProvider = {
-  request(...args: any): Promise<any>,
-  on(e: string, handler: (chainId: string) => any): void,
+  request(...args: unknown[]): Promise<unknown>,
+  on(e: string, handler: (x: string) => void): void,
 }
 
 function App() {
@@ -22,11 +20,6 @@ function App() {
   const [prompts, setPrompts] = useState<string[]>([])
   const [suaveTxHash, setSuaveTxHash] = useState<string>()
   const [suaveWallet, setSuaveWallet] = useState<SuaveWallet<CustomTransport>>()
-  const [l1Wallet] = useState(createWalletClient({
-    account: privateKeyToAccount(config.l1PrivateKey),
-    chain: L1,
-    transport: http(config.l1RpcHttp),
-  }))
   const [suaveProvider] = useState(getSuaveProvider(http(config.suaveRpcHttp)))
   const [l1Provider] = useState(createPublicClient({
     transport: http(config.l1RpcHttp),
@@ -36,41 +29,26 @@ function App() {
   const [tokenId, setTokenId] = useState<bigint>()
   const [nftUri, setNftUri] = useState<string>()
   const [chainId, setChainId] = useState<string>()
-
-  const uiDisabled = (_chainId?: string) => {
-    const id = _chainId || chainId
-    return id !== `0x${suaveRigil.id.toString(16)}`
-  }
-
-  const alertBadChain = () => {
-    setChainId(undefined)
-    alert("Please switch to a SUAVE RPC to continue.")
-  }
+  const [ethereum, setEthereum] = useState<EthereumProvider>()
 
   useEffect(() => {
+    console.log("config", config)
     const load = async () => {
       if ('ethereum' in window) {
         const ethereum = window.ethereum as EthereumProvider
         ethereum.on("chainChanged", (chainId_) => {
-          if (uiDisabled(chainId_)) {
-            alertBadChain()
-          } else {
-            setChainId(chainId_)
-          }
+          setChainId(chainId_)
         })
+        setEthereum(ethereum)
         if (!chainId) {
-          const chainId_ = await ethereum.request({ method: 'eth_chainId' })
-          if (uiDisabled(chainId_)) {
-            alertBadChain()
-            return
-          } else {
-            setChainId(chainId_)
-          }
+          const chainId_ = await ethereum.request({ method: 'eth_chainId' }) as string
+          setChainId(chainId_)
         }
-        const accounts: Address[] = await ethereum.request({ method: 'eth_requestAccounts' })
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' }) as Address[]
         setSuaveWallet(getSuaveWallet({
           transport: custom(ethereum as EthereumProvider),
           jsonRpcAccount: accounts[0],
+          customRpc: config.suaveRpcHttp
         }))
       } else {
         alert("Browser wallet not found. Please install one to continue.")
@@ -79,16 +57,20 @@ function App() {
     load()
   }, [chainId])
 
+  /** Make NFT on suave and mint on L1. */
   const onMint = async () => {
-    if (!suaveWallet) {
-      throw new Error("Suave wallet not initialized")
-    }
-    if (!l1Wallet || !l1Wallet.account) {
-      throw new Error("L1 wallet not initialized")
-    }
     setIsLoading(true)
 
+    if (!suaveWallet || !ethereum) {
+      throw new Error("L1 wallet not initialized")
+    }
     try {
+      const l1Wallet = createWalletClient({
+        account: suaveWallet.account,
+        chain: L1,
+        transport: custom(ethereum),
+      })
+
       // SUAVE creates the NFT & returns the signature required to mint it
       const suaveReceipt = await sendMintRequest()
       const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
@@ -97,20 +79,23 @@ function App() {
 
       // send L1 tx to actually mint the NFT
       // SUAVE could do this for us but we're doing it here for simplicity
-      const mintTxBase = mintNFT(tokenId, recipient, signature, queryResult)
+      const mintTxBase = mintNFT(tokenId, signature, queryResult)
       const mintTx = {
         ...mintTxBase,
         nonce: await l1Provider.getTransactionCount({ address: l1Wallet.account.address }),
       }
+
       try {
         const mintTxHash = await l1Wallet.sendTransaction(mintTx)
-        console.log("Minted NFT on L1", mintTxHash)
+        console.log("Minting NFT on L1", mintTxHash)
         const l1Receipt = await l1Provider.waitForTransactionReceipt({ hash: mintTxHash })
         if (l1Receipt.status !== 'success') {
           console.error("L1 transaction failed", l1Receipt)
           throw new Error("L1 transaction failed")
         }
         console.log("L1 transaction succeeded", l1Receipt)
+        const decodedLogs = decodeNFTEELogs(l1Receipt)
+        console.log("Decoded logs", decodedLogs)
       } catch (e) {
         alert(`Failed to mint NFT on L1: ${e}`)
         return setIsLoading(false)
@@ -123,14 +108,14 @@ function App() {
     setIsLoading(false)
   }
 
+  /** Sends confidential request to ChatNFT SUAPP to create a new NFT and get the signature to mint it. */
   const sendMintRequest = async (): Promise<TransactionReceiptSuave> => {
     if (!suaveWallet) {
       throw new Error("Suave wallet not initialized")
     }
     const mintRequest = new MintRequest(
-      l1Wallet.account.address,
-      config.l1PrivateKey,
-      prompts.map(p => escapeHtml(p)),
+      suaveWallet.account.address, // NOTE: we're relying on suaveWallet being the same address as l1Wallet!
+      prompts.map(escapeHtml),
     )
     const ccr = mintRequest.confidentialRequest()
     const txHash = await suaveWallet.sendTransaction(ccr)
@@ -211,8 +196,8 @@ function App() {
               <input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput}
                 onChange={e => setPromptInput(e.target.value)}
                 style={{ width: "100%" }}
-                disabled={uiDisabled()} />
-              <div className={buttonText} style={{ width: "100%" }}><button type='submit' disabled={uiDisabled()}>Add Prompt</button></div>
+              />
+              <div className={buttonText} style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
             </form>
           </div>
         </div>
@@ -232,7 +217,9 @@ function App() {
           </div>
           <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
             <div className='basis-1/4'>
-              <button type='button' className='button-secondary' onClick={onMint} disabled={uiDisabled()}>Mint NFT</button>
+              {chainId && parseInt(chainId, 16) !== config.l1ChainId ? <div>Please connect your wallet to L1 {L1.name} to mint NFTs</div> :
+                <button type='button' className='button-secondary' onClick={onMint}>Mint NFT</button>
+              }
             </div>
             <div className='basis-3/4'>
               <ul className='list-disc' style={{ textAlign: "left", paddingLeft: 64 }}>
@@ -260,9 +247,9 @@ function App() {
         <div>L1 NFT Address: {config.nfteeAddress}</div>
         <div style={{ display: "flex", flexDirection: "column", textAlign: "right" }}>
           <div>Connected Wallet: {suaveWallet?.account.address}</div>
-          {l1Wallet.account.address.toLowerCase() !== suaveWallet?.account.address.toLowerCase() &&
+          {suaveWallet?.account.address.toLowerCase() !== suaveWallet?.account.address.toLowerCase() &&
             <div style={{ color: "#fa5949" }}>
-              L1 Wallet: {l1Wallet.account.address}
+              L1 Wallet: {suaveWallet?.account.address}
             </div>}
         </div>
       </div>

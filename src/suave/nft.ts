@@ -6,7 +6,7 @@ export async function parseChatNFTLogs(receipt: TransactionReceiptSuave) {
     const logs = receipt.logs
     const topics = [
         getEventSelector('NFTCreated(uint256,address,bytes)'),
-        getEventSelector('QueryResult(bytes)')
+        getEventSelector('QueryResult(string)'),
     ]
     let nftCreatedLog = undefined
     let queryResultLog = undefined
@@ -23,6 +23,7 @@ export async function parseChatNFTLogs(receipt: TransactionReceiptSuave) {
                 queryResultLog = decodedLog
             } else {
                 console.log("Unknown log")
+                console.log(decodedLog)
             }
         }
     }
@@ -40,7 +41,7 @@ export async function parseChatNFTLogs(receipt: TransactionReceiptSuave) {
         signature,
         tokenId,
         queryResult: (queryResultLog.args as {
-            result: Hex
+            result: string
         }).result,
     }
 }

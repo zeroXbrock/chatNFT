@@ -1,6 +1,20 @@
-import { Address, Hex, PublicClient, bytesToHex, encodeFunctionData, hexToBytes, hexToString, parseGwei } from '@flashbots/suave-viem'
+import { Hex, PublicClient, TransactionReceipt, bytesToHex, decodeEventLog, encodeFunctionData, hexToBytes, keccak256, stringToHex } from '@flashbots/suave-viem'
 import config from '../config'
 import NFTEE from '../contracts/out/NFTEE2.sol/SuaveNFT.json'
+
+export function decodeNFTEELogs(receipt: TransactionReceipt) {
+    const logs = receipt.logs
+    const decodedLogs = []
+    for (const log of logs) {
+        const decodedLog = decodeEventLog({
+            abi: NFTEE.abi,
+            data: log.data,
+            topics: log.topics,
+        })
+        decodedLogs.push(decodedLog)
+    }
+    return decodedLogs
+}
 
 export async function readNFT(
     ethProvider: PublicClient,
@@ -32,16 +46,15 @@ export async function readNFT(
     return {nft, uri}
 }
 
-/** Mint an NFT on L1.
+/** Mint an NFT on L1, given a tokenId, signature, and content from ChatNFT.
  *
  * Ideally, this would be done in suave and we (the client) wouldn't have to,
  * but for demo's sake we'll do it here.
  */
 export function mintNFT(
     tokenId: bigint,
-    recipient: Address,
     signature: Hex,
-    content: Hex,
+    content: string,
 ) {
     // parse signature into {r, s, v}
     const sigBytes = hexToBytes(signature)
@@ -52,28 +65,37 @@ export function mintNFT(
     if (vi <= 1) {
         vi += 27
     }
+    console.log({
+        r,
+        s,
+        v,
+        vi
+    })
 
-    const decodedQueryResult = hexToString(content)
+    // content = content.replace(/\\\\/g, "\\")
+    // console.log("content", hexToString(content))
+    console.log("hash(content)", keccak256(stringToHex(content)))
+    console.log("content", content)
 
+    // const decodedQueryResult = content
+    // console.log('decodedQueryResult', `'${decodedQueryResult}'`)
     return {
         to: config.nfteeAddress,
-        gas: 1000000n,
-        gasPrice: parseGwei("96"),
+        gas: 2000000n,
+        gasPrice: 150n * (10n ** 9n),
         data: encodeFunctionData({
             abi: NFTEE.abi,
             functionName: 'mintNFTWithSignature',
             args: [
                 /*
                 uint256 tokenId,
-                address recipient,
-                string memory content,
+                bytes content,
                 uint8 v,
                 bytes32 r,
                 bytes32 s
                 */
                 tokenId,
-                recipient,
-                decodedQueryResult,
+                content,
                 vi,
                 r,
                 s,
