@@ -24,12 +24,6 @@ contract ChatNFT is Suapp {
         owner = msg.sender;
     }
 
-    /// Require function to be called via confidential compute request.
-    modifier confidential() {
-        require(Suave.isConfidential(), "must call confidentially");
-        _;
-    }
-
     modifier onlyOwner() {
         require(msg.sender == owner, "only owner can call this function");
         _;
