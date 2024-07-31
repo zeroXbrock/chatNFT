@@ -7,7 +7,7 @@ import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
 import { L1 } from './L1/chain'
 import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
-import { escapeHtml } from './util'
+import { abbreviatedAddress, escapeHtml } from './util'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 type EthereumProvider = {
@@ -220,7 +220,7 @@ function App() {
           <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
             <div className='basis-1/4'>
               {chainId && parseInt(chainId, 16) !== config.l1ChainId ?
-                <button className='blocking-alert text-sm' onClick={() => {
+                <button className='subtle-alert text-sm' onClick={() => {
                   ethereum?.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: numberToHex(config.l1ChainId) }] })
                 }}>
                   <em>
@@ -249,7 +249,7 @@ function App() {
           <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
           <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
           <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
-          <div className='blocking-alert' style={{ margin: 12, marginTop: 24 }}>
+          <div className='subtle-alert' style={{ margin: 12, marginTop: 24 }}>
             {!!nftUri &&
               <button className='button-default'
                 onClick={onViewRawNFT}>
@@ -269,14 +269,32 @@ function App() {
           </div>
         </div>}
       </div>
-      <div className="footer">
-        <div>L1 NFT Address: {config.nfteeAddress}</div>
+      <div className="footer text-xs">
+        <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
+          <span>
+            L1 NFTEE: <a className='footer-link' href={`https://holesky.etherscan.io/address/${config.nfteeAddress}`} target='_blank'>
+              {abbreviatedAddress(config.nfteeAddress)}
+            </a>
+          </span>
+          <span>
+            SUAVE ChatNFT: <a className='footer-link' href={`https://explorer.toliman.suave.flashbots.net/address/${config.chatNftAddress}?tab=txs`} target='_blank'>
+              {abbreviatedAddress(config.chatNftAddress)}
+            </a>
+          </span>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", textAlign: "right" }}>
-          <div>Connected Wallet: {suaveWallet?.account.address}</div>
-          {suaveWallet?.account.address.toLowerCase() !== suaveWallet?.account.address.toLowerCase() &&
-            <div style={{ color: "#fa5949" }}>
-              L1 Wallet: {suaveWallet?.account.address}
-            </div>}
+          <span>
+            (Connected) {suaveWallet?.account.address}
+          </span>
+          <span>
+            <a className='footer-link' href={`https://holesky.etherscan.io/address/${suaveWallet?.account.address}`} target='_blank'>
+              Holesky
+            </a>
+            //
+            <a className='footer-link' href={`https://explorer.toliman.suave.flashbots.net/address/${suaveWallet?.account.address}?tab=txs`} target='_blank'>
+              Toliman
+            </a>
+          </span>
         </div>
       </div>
     </div>

@@ -12,3 +12,7 @@ export function escapeHtml(text: string) {
     return map[m as '&' | '<' | '>' | '"' | "'"];
   });
 }
+
+export function abbreviatedAddress(address: string) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
