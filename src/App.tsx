@@ -10,7 +10,7 @@ import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
 import { abbreviatedAddress, escapeHtml, EthereumProvider } from './util'
 import Notification from './components/notification'
 import BalanceAwareMintButton from './components/balanceAwareMintButton'
-import useTokenIds from './hooks/useTokenIds'
+import useCachedNFTs from './hooks/useTokenIds'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 
@@ -24,7 +24,7 @@ function App() {
   const [chainId, setChainId] = useState<string>()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [browserWallet, setBrowserWallet] = useState<SuaveWallet<CustomTransport>>()
-  const { tokenIds, cacheTokenId } = useTokenIds()
+  const { nfts, cacheNFT } = useCachedNFTs()
 
   const addNotification = (message: string, id: string, { href, linkText }: { linkText?: string, href?: string } = {}) => {
     setNotifications([...notifications, {
@@ -44,7 +44,7 @@ function App() {
   const ethereum = ('ethereum' in window) && window.ethereum as EthereumProvider
 
   useEffect(() => {
-    console.debug("cached token IDs", tokenIds)
+    console.debug("cached NFTs", nfts)
     console.debug("L1_CHAIN_ID", config.l1ChainId)
     console.debug("L1_RPC_HTTP", config.l1RpcHttp)
     const load = async () => {
@@ -91,12 +91,13 @@ function App() {
 
       // SUAVE creates the NFT & returns the signature required to mint it
       const suaveReceipt = await sendMintRequest()
-      const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
-      console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
+      const suaveNftResult = await parseChatNFTLogs(suaveReceipt)
+      const { signature, tokenId, queryResult } = suaveNftResult
+      console.log("Created NFT from SUAVE", suaveNftResult)
       setTokenId(tokenId)
 
       // add tokenId to array in LocalStorage
-      cacheTokenId(tokenId)
+      cacheNFT(suaveNftResult)
 
       // check for skill issue
       if (queryResult.toLowerCase().includes("sorry")) {

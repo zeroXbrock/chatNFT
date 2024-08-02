@@ -1,29 +1,40 @@
-import { numberToHex } from '@flashbots/suave-viem';
+import { Address, Hex, numberToHex } from '@flashbots/suave-viem';
 import { useState, useEffect } from 'react';
 
-const TOKEN_IDS_KEY = 'tokenIds'
+const IDS_KEY = 'suave_nfts';
 
-const loadTokenIds = () => {
-    const storedTokenIds = localStorage.getItem(TOKEN_IDS_KEY);
+type AuthNFT<T> = {
+    tokenId: T;
+    recipient: Address;
+    signature: Hex;
+    queryResult: string;
+}
+
+const loadAuthNFTs = () => {
+    const storedTokenIds = localStorage.getItem(IDS_KEY);
     if (storedTokenIds) {
-        return JSON.parse(storedTokenIds).map((x: string) => BigInt(x))
+        return JSON.parse(storedTokenIds).map((x: AuthNFT<Hex>) => BigInt(x.tokenId)) as AuthNFT<bigint>[];
     }
     return [];
 }
 
-const useTokenIds = (): { tokenIds: bigint[], cacheTokenId: (x: bigint) => void } => {
-    const [tokenIds, setTokenIds] = useState<bigint[]>(loadTokenIds() ?? []);
+const useAuthNFTs = (): { nfts: AuthNFT<bigint>[], cacheNFT: (x: AuthNFT<bigint>) => void } => {
+    const [nfts, setNFTs] = useState<AuthNFT<bigint>[]>(loadAuthNFTs() ?? []);
 
     useEffect(() => {
-        localStorage.setItem(TOKEN_IDS_KEY, JSON.stringify(tokenIds.map(t => numberToHex(t))));
-    }, [tokenIds]);
+        localStorage.setItem(IDS_KEY, JSON.stringify(nfts.map(t => ({
+            ...t,
+            tokenId: numberToHex(t.tokenId)
+        }))));
+    }, [nfts]);
 
-    const cacheTokenId = (tokenId: bigint) => {
-        console.log('Caching token id', tokenId);
-        setTokenIds([...tokenIds, tokenId]);
+    /** Add a new NFT to LocalStorage. */
+    const cacheNFT = (nft: AuthNFT<bigint>) => {
+        console.debug('Caching NFT', nft);
+        setNFTs([...nfts, nft]);
     }
 
-    return { tokenIds, cacheTokenId };
+    return { nfts, cacheNFT };
 };
 
-export default useTokenIds;
+export default useAuthNFTs;
