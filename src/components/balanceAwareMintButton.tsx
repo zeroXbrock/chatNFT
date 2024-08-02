@@ -51,8 +51,7 @@ function BalanceAwareMintButton({ signer, l1Provider, suaveProvider, chainId, et
         {chainId && parseInt(chainId, 16) !== config.l1ChainId ?
             <button className='subtle-alert text-sm' onClick={async () => {
                 try {
-                    const res = await ethereum?.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: numberToHex(config.l1ChainId) }] })
-                    console.log("res", res)
+                    await ethereum?.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: numberToHex(config.l1ChainId) }] })
                 } catch (e) {
                     const err = e as { code: number, message: string, stack: string }
                     if ('code' in err && err.code === 4902 && config.l1RpcHttp) {
