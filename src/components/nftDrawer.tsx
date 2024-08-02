@@ -53,7 +53,6 @@ const nftDrawer = ({
                 }} />
             }</div>
         </div>
-
     )
 }
 
