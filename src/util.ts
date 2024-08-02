@@ -16,3 +16,8 @@ export function escapeHtml(text: string) {
 export function abbreviatedAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
+
+export type EthereumProvider = {
+    request(...args: unknown[]): Promise<unknown>,
+    on(e: string, handler: (x: string) => void): void,
+}
