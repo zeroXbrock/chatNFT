@@ -45,7 +45,7 @@ function BalanceAwareMintButton({ signer, l1Provider, suaveProvider, chainId, et
 
     useInterval(async () => {
         loadBalances()
-    }, 10000)
+    }, 30000)
 
     return (<div>
         {chainId && parseInt(chainId, 16) !== config.l1ChainId ?
