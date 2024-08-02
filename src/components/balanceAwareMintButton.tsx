@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useInterval } from './useInterval';
 import { CustomTransport, Hex, HttpTransport, numberToHex, PublicClient } from '@flashbots/suave-viem';
 import { SuaveProvider, SuaveWallet } from '@flashbots/suave-viem/chains/utils';
@@ -16,7 +16,15 @@ function BalanceAwareMintButton({ signer, l1Provider, suaveProvider, chainId, et
     const [suaveBalance, setSuaveBalance] = useState<bigint>()
     const [l1Balance, setL1Balance] = useState<bigint>()
 
-    useInterval(async () => {
+    const suaveBalanceSufficient = useCallback(() => {
+        return suaveBalance && suaveBalance > 10n ** 17n;
+    }, [suaveBalance]);
+
+    const l1BalanceSufficient = useCallback(() => {
+        return l1Balance && l1Balance > 25n * 10n ** 16n;
+    }, [l1Balance]);
+
+    const loadBalances = useCallback(async () => {
         if (!l1BalanceSufficient()) {
             console.log("Fetching L1 balance...")
             const l1Balance = await l1Provider.getBalance({ address: signer.account.address })
@@ -29,15 +37,15 @@ function BalanceAwareMintButton({ signer, l1Provider, suaveProvider, chainId, et
             setSuaveBalance(suaveBalance)
             console.log("SUAVE balance:", suaveBalance)
         }
+    }, [l1BalanceSufficient, suaveBalanceSufficient, l1Provider, signer.account.address, suaveProvider])
+
+    useEffect(() => {
+        loadBalances()
+    }, [loadBalances])
+
+    useInterval(async () => {
+        loadBalances()
     }, 10000)
-
-    const suaveBalanceSufficient = () => {
-        return suaveBalance && suaveBalance > 10n ** 17n;
-    };
-
-    const l1BalanceSufficient = () => {
-        return l1Balance && l1Balance > 25n * 10n ** 16n;
-    };
 
     return (<div>
         {chainId && parseInt(chainId, 16) !== config.l1ChainId ?
