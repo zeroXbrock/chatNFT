@@ -13,7 +13,7 @@ type AuthNFT<T> = {
 const loadAuthNFTs = () => {
     const storedTokenIds = localStorage.getItem(IDS_KEY);
     if (storedTokenIds) {
-        return JSON.parse(storedTokenIds).map((x: AuthNFT<Hex>) => BigInt(x.tokenId)) as AuthNFT<bigint>[];
+        return JSON.parse(storedTokenIds).map((x: AuthNFT<Hex>) => ({ ...x, tokenId: BigInt(x.tokenId) })) as AuthNFT<bigint>[];
     }
     return [];
 }
@@ -22,6 +22,9 @@ const useAuthNFTs = (): { nfts: AuthNFT<bigint>[], cacheNFT: (x: AuthNFT<bigint>
     const [nfts, setNFTs] = useState<AuthNFT<bigint>[]>(loadAuthNFTs() ?? []);
 
     useEffect(() => {
+        if (nfts.length === 0) {
+            return;
+        }
         localStorage.setItem(IDS_KEY, JSON.stringify(nfts.map(t => ({
             ...t,
             tokenId: numberToHex(t.tokenId)

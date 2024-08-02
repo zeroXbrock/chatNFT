@@ -10,7 +10,7 @@ import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
 import { abbreviatedAddress, escapeHtml, EthereumProvider } from './util'
 import Notification from './components/notification'
 import BalanceAwareMintButton from './components/balanceAwareMintButton'
-import useCachedNFTs from './hooks/useTokenIds'
+import useCachedNFTs from './hooks/useAuthNFTs'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 
