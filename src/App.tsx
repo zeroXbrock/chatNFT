@@ -71,7 +71,8 @@ function App() {
     load()
   }, [chainId,
     browserWallet,
-    ethereum
+    ethereum,
+    nfts,
   ])
 
   /** Make NFT on suave and mint on L1. */
