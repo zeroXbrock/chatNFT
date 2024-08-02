@@ -49,13 +49,34 @@ function BalanceAwareMintButton({ signer, l1Provider, suaveProvider, chainId, et
 
     return (<div>
         {chainId && parseInt(chainId, 16) !== config.l1ChainId ?
-            <button className='subtle-alert text-sm' onClick={() => {
-                ethereum?.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: numberToHex(config.l1ChainId) }] })
+            <button className='subtle-alert text-sm' onClick={async () => {
+                try {
+                    await ethereum?.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: numberToHex(config.l1ChainId) }] })
+                } catch (e) {
+                    const err = e as { code: number, message: string, stack: string }
+                    if ('code' in err && err.code === 4902 && config.l1RpcHttp) {
+                        ethereum?.request({
+                            method: 'wallet_addEthereumChain', params: [{
+                                chainId: numberToHex(config.l1ChainId),
+                                blockExplorerUrls: ["https://holesky.etherscan.io/"],
+                                chainName: "Holesky",
+                                nativeCurrency: {
+                                    decimals: 18,
+                                    name: "Holesky",
+                                    symbol: "ETH"
+                                },
+                                rpcUrls: [config.l1RpcHttp]
+                            }]
+                        })
+                    } else {
+                        console.warn(e)
+                    }
+                }
             }}>
                 <em>
                     Connect your wallet to <span className='text-lime-300'>
                         {
-                            ["localhost", "127.0.0.1"].map(host =>
+                            ["localhost", "127.0.0.1"].filter(host =>
                                 config.l1RpcHttp.includes(host)).length > 0
                                 ?
                                 config.l1RpcHttp :
