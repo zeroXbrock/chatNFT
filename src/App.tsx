@@ -17,32 +17,31 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [promptInput, setPromptInput] = useState<string>("")
   const [prompts, setPrompts] = useState<string[]>([])
-  const [browserWallet, setBrowserWallet] = useState<SuaveWallet<CustomTransport>>()
-  const [suaveProvider] = useState(getSuaveProvider(http(config.suaveRpcHttp)))
-  const [l1Provider] = useState(createPublicClient({
-    transport: http(config.l1RpcHttp),
-    chain: L1
-  }))
   const [nftContent, setNftContent] = useState<Hex>()
   const [tokenId, setTokenId] = useState<bigint>()
   const [nftUri, setNftUri] = useState<string>()
   const [chainId, setChainId] = useState<string>()
-  const [ethereum, setEthereum] = useState<EthereumProvider>()
   const [notifications, setNotifications] = useState<Notification[]>([])
+
+  const [browserWallet, setBrowserWallet] = useState<SuaveWallet<CustomTransport>>()
+  const l1Provider = createPublicClient({
+    transport: http(config.l1RpcHttp),
+    chain: L1
+  })
+  const suaveProvider = getSuaveProvider(http(config.suaveRpcHttp))
+  const ethereum = ('ethereum' in window) && window.ethereum as EthereumProvider
 
   useEffect(() => {
     console.debug("L1_CHAIN_ID", config.l1ChainId)
     console.debug("L1_RPC_HTTP", config.l1RpcHttp)
     const load = async () => {
-      if (!('ethereum' in window)) {
+      if (!ethereum) {
         alert("Browser wallet not found. Please install one to continue.")
         return
       }
-      const ethereum = window.ethereum as EthereumProvider
       ethereum.on("chainChanged", (chainId_) => {
         setChainId(chainId_)
       })
-      setEthereum(ethereum)
       if (!chainId) {
         const chainId_ = await ethereum.request({ method: 'eth_chainId' }) as string
         setChainId(chainId_)
@@ -59,9 +58,9 @@ function App() {
     load()
   }, [chainId,
     browserWallet,
-    l1Provider,
-    suaveProvider,
+    ethereum
   ])
+
 
   /** Make NFT on suave and mint on L1. */
   const onMint = async () => {
