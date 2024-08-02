@@ -32,8 +32,8 @@ function App() {
   const [notifications, setNotifications] = useState<Notification[]>([])
 
   useEffect(() => {
-    console.log("L1_CHAIN_ID", config.l1ChainId)
-    console.log("L1_RPC_HTTP", config.l1RpcHttp)
+    console.debug("L1_CHAIN_ID", config.l1ChainId)
+    console.debug("L1_RPC_HTTP", config.l1RpcHttp)
     const load = async () => {
       if (!('ethereum' in window)) {
         alert("Browser wallet not found. Please install one to continue.")
