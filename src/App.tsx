@@ -10,6 +10,7 @@ import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
 import { abbreviatedAddress, escapeHtml, EthereumProvider } from './util'
 import Notification from './components/notification'
 import BalanceAwareMintButton from './components/balanceAwareMintButton'
+import useTokenIds from './hooks/useTokenIds'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 
@@ -23,6 +24,7 @@ function App() {
   const [chainId, setChainId] = useState<string>()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [browserWallet, setBrowserWallet] = useState<SuaveWallet<CustomTransport>>()
+  const { tokenIds, cacheTokenId } = useTokenIds()
 
   const l1Provider = createPublicClient({
     transport: http(config.l1RpcHttp),
@@ -32,6 +34,7 @@ function App() {
   const ethereum = ('ethereum' in window) && window.ethereum as EthereumProvider
 
   useEffect(() => {
+    console.debug("cached token IDs", tokenIds)
     console.debug("L1_CHAIN_ID", config.l1ChainId)
     console.debug("L1_RPC_HTTP", config.l1RpcHttp)
     const load = async () => {
@@ -81,6 +84,9 @@ function App() {
       const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
       console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
       setTokenId(tokenId)
+
+      // add tokenId to array in LocalStorage
+      cacheTokenId(tokenId)
 
       // send L1 tx to actually mint the NFT
       // SUAVE could do this for us but we're doing it here for simplicity
