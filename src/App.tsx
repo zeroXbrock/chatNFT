@@ -12,6 +12,7 @@ import Notification from './components/notification'
 import BalanceAwareMintButton from './components/balanceAwareMintButton'
 import useCachedNFTs from './hooks/useAuthNFTs'
 import NFTDrawer from './components/nftDrawer'
+import { LoadingContext } from './hooks/useLoading'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 
@@ -223,7 +224,7 @@ function App() {
   const leftStyle =
     { display: "flex", flexDirection: "column", alignItems: "flex-start" } as const
 
-  return (
+  return (<><LoadingContext.Provider value={{ isLoading, setIsLoading }}>
     <div style={leftStyle}>
       {isLoading && <div className="loading">
         Loading
@@ -342,6 +343,8 @@ function App() {
         </div>
       </div>
     </div >
+  </LoadingContext.Provider>
+  </>
   )
 }
 
