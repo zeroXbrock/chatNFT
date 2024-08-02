@@ -3,8 +3,8 @@ import { FunctionComponent } from 'react';
 interface Notification {
     title?: string;
     message: string;
-    href: string;
-    linkText: string;
+    href?: string;
+    linkText?: string;
     id?: string;
     timestamp?: number;
 }
@@ -26,7 +26,7 @@ const Notification: FunctionComponent<NotificationProps> = ({ messages }) => {
             newMessages.map((message, index) => (
                 <div key={`${index}`} className='notification'>
                     <span>{message.message}</span>
-                    <a href={message.href} target='_blank'>{message.linkText}</a>
+                    {message.href && <a href={message.href} target='_blank'>{message.linkText ?? message.href.substring(0, 21)}</a>}
                 </div>
             ))
         }</div>;

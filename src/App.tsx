@@ -24,6 +24,16 @@ function App() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [browserWallet, setBrowserWallet] = useState<SuaveWallet<CustomTransport>>()
 
+  const addNotification = (message: string, id: string, { href, linkText }: { linkText?: string, href?: string } = {}) => {
+    setNotifications([...notifications, {
+      message,
+      href,
+      linkText,
+      id,
+      timestamp: new Date().getTime()
+    } as Notification])
+  }
+
   const l1Provider = createPublicClient({
     transport: http(config.l1RpcHttp),
     chain: L1
@@ -82,6 +92,14 @@ function App() {
       console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
       setTokenId(tokenId)
 
+      // check for skill issue
+      if (queryResult.toLowerCase().includes("sorry")) {
+        addNotification("Skill issue detected", tokenId.toString(), {
+          href: "/skillIssue.png",
+          linkText: "."
+        })
+      }
+
       // send L1 tx to actually mint the NFT
       // SUAVE could do this for us but we're doing it here for simplicity
       const mintTxBase = mintNFT(tokenId, signature, queryResult)
@@ -94,13 +112,7 @@ function App() {
 
       try {
         const mintTxHash = await l1Wallet.sendTransaction(mintTx)
-        setNotifications([...notifications, {
-          message: 'Minting NFT on L1',
-          href: `https://holesky.etherscan.io/tx/${mintTxHash}`,
-          linkText: abbreviatedAddress(mintTxHash),
-          id: mintTxHash,
-          timestamp: new Date().getTime()
-        } as Notification])
+        addNotification("Minting NFT on L1", mintTxHash, { href: `https://holesky.etherscan.io/tx/${mintTxHash}`, linkText: abbreviatedAddress(mintTxHash) })
         console.log("Minting NFT on L1", mintTxHash)
         const l1Receipt = await l1Provider.waitForTransactionReceipt({ hash: mintTxHash })
         if (l1Receipt.status !== 'success') {
@@ -134,13 +146,10 @@ function App() {
     )
     const ccr = mintRequest.confidentialRequest()
     const txHash = await browserWallet.sendTransaction(ccr)
-    setNotifications([...notifications, {
-      message: 'Creating NFT on SUAVE',
+    addNotification('Creating NFT on SUAVE', txHash, {
       href: `https://explorer.toliman.suave.flashbots.net/tx/${txHash}`,
       linkText: abbreviatedAddress(txHash),
-      id: txHash,
-      timestamp: new Date().getTime()
-    } as Notification])
+    })
 
     const receipt = await suaveProvider.waitForTransactionReceipt({ hash: txHash })
     if (receipt.status !== 'success') {
