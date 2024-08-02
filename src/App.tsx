@@ -11,6 +11,7 @@ import { abbreviatedAddress, escapeHtml, EthereumProvider } from './util'
 import Notification from './components/notification'
 import BalanceAwareMintButton from './components/balanceAwareMintButton'
 import useCachedNFTs from './hooks/useAuthNFTs'
+import NFTDrawer from './components/nftDrawer'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 
@@ -219,14 +220,22 @@ function App() {
 
   const buttonText = "text-[#f0fff0]"
 
+  const leftStyle =
+    { display: "flex", flexDirection: "column", alignItems: "flex-start" } as const
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+    <div style={leftStyle}>
       {isLoading && <div className="loading">
         Loading
       </div>}
       <Notification messages={notifications} />
-      <div className="text-2xl font-medium">🌿 ChatNFT</div>
-      <div className='text-sm'>Mint an NFT from a ChatGPT prompt. Powered by SUAVE.</div>
+      <div className="menubar">
+        <div style={leftStyle}>
+          <div className="text-2xl font-medium">🌿 ChatNFT</div>
+          <div className='text-sm'>Mint an NFT from a ChatGPT prompt. Powered by SUAVE.</div>
+        </div>
+        {browserWallet && <NFTDrawer user={browserWallet.account.address} loadNFT={renderNFT} />}
+      </div>
       <div className='container mx-auto app'>
         <div id="promptArea" className="flex flex-col">
           <div className='text-lg'>Enter a prompt:</div>

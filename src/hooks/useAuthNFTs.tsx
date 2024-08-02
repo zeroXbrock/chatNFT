@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 const IDS_KEY = 'suave_nfts';
 
-type AuthNFT<T> = {
+export type AuthNFT<T = bigint> = {
     tokenId: T;
     recipient: Address;
     signature: Hex;

@@ -69,3 +69,42 @@
   background-color: #0001;
   z-index: 1001;
 }
+
+.menubar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  margin: 1em 0;
+  padding: 1em;
+  padding-left: 5%;
+  padding-right: 5%;
+  width: 100%;
+  background-color: #bbbbbb17;
+  box-shadow: 2px 2px 2px #00000017;
+  height: 5em;
+}
+
+.nft-drawer {
+  height: max-content;
+  position: relative;
+  overflow-y: visible;
+  background-color: #ffe9;
+}
+
+.menu-button {
+  color: #f0fff0;
+  height: 100%;
+  border-radius: 0;
+  border: none;
+  outline: none;
+}
+
+.menu-button:hover {
+  background-color: #fff0 !important;
+  color: #f0fff0 !important;
+}
+
+.menu-button:focus,
+.menu-button:focus-visible {
+  outline: none;
+}
