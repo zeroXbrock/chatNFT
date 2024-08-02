@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useInterval } from './useInterval';
+import { useInterval } from '../hooks/useInterval';
 import { CustomTransport, Hex, HttpTransport, numberToHex, PublicClient } from '@flashbots/suave-viem';
 import { SuaveProvider, SuaveWallet } from '@flashbots/suave-viem/chains/utils';
-import { EthereumProvider } from './common';
 import config from '../config';
+import { EthereumProvider } from '../util';
 
 function BalanceAwareMintButton({ signer, l1Provider, suaveProvider, chainId, ethereum, onMint }: {
     signer: SuaveWallet<CustomTransport>,

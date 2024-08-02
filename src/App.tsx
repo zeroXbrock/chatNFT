@@ -7,9 +7,8 @@ import { MintRequest } from './suave/mint'
 import { parseChatNFTLogs } from './suave/nft'
 import { L1 } from './L1/chain'
 import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
-import { abbreviatedAddress, escapeHtml } from './util'
+import { abbreviatedAddress, escapeHtml, EthereumProvider } from './util'
 import Notification from './components/notification'
-import { EthereumProvider } from './components/common'
 import BalanceAwareMintButton from './components/balanceAwareMintButton'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
