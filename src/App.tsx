@@ -22,8 +22,8 @@ function App() {
   const [nftUri, setNftUri] = useState<string>()
   const [chainId, setChainId] = useState<string>()
   const [notifications, setNotifications] = useState<Notification[]>([])
-
   const [browserWallet, setBrowserWallet] = useState<SuaveWallet<CustomTransport>>()
+
   const l1Provider = createPublicClient({
     transport: http(config.l1RpcHttp),
     chain: L1
@@ -60,7 +60,6 @@ function App() {
     browserWallet,
     ethereum
   ])
-
 
   /** Make NFT on suave and mint on L1. */
   const onMint = async () => {
