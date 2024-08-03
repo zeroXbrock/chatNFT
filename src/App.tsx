@@ -8,8 +8,12 @@ import { parseChatNFTLogs } from './suave/nft'
 import { L1 } from './L1/chain'
 import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
 import { abbreviatedAddress, escapeHtml, EthereumProvider } from './util'
-import Notification from './components/notification'
+import SysNotifications, { INotification } from './components/notifications'
 import BalanceAwareMintButton from './components/balanceAwareMintButton'
+import useCachedNFTs from './hooks/useAuthNFTs'
+import NFTDrawer from './components/nftDrawer'
+import LoadingContext from './hooks/contextLoading'
+import NotificationContext from './hooks/contextNotifications'
 
 const defaultPrompt = "Render a cat in ASCII art. Return only the raw result with no formatting or explanation."
 
@@ -21,8 +25,9 @@ function App() {
   const [tokenId, setTokenId] = useState<bigint>()
   const [nftUri, setNftUri] = useState<string>()
   const [chainId, setChainId] = useState<string>()
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<INotification[]>([])
   const [browserWallet, setBrowserWallet] = useState<SuaveWallet<CustomTransport>>()
+  const { nfts, cacheNFT } = useCachedNFTs()
 
   const addNotification = (message: string, id: string, { href, linkText }: { linkText?: string, href?: string } = {}) => {
     setNotifications([...notifications, {
@@ -31,7 +36,7 @@ function App() {
       linkText,
       id,
       timestamp: new Date().getTime()
-    } as Notification])
+    } as INotification])
   }
 
   const l1Provider = createPublicClient({
@@ -42,6 +47,7 @@ function App() {
   const ethereum = ('ethereum' in window) && window.ethereum as EthereumProvider
 
   useEffect(() => {
+    console.debug("cached NFTs", nfts)
     console.debug("L1_CHAIN_ID", config.l1ChainId)
     console.debug("L1_RPC_HTTP", config.l1RpcHttp)
     const load = async () => {
@@ -68,7 +74,8 @@ function App() {
     load()
   }, [chainId,
     browserWallet,
-    ethereum
+    ethereum,
+    nfts,
   ])
 
   /** Make NFT on suave and mint on L1. */
@@ -88,9 +95,13 @@ function App() {
 
       // SUAVE creates the NFT & returns the signature required to mint it
       const suaveReceipt = await sendMintRequest()
-      const { recipient, signature, tokenId, queryResult } = await parseChatNFTLogs(suaveReceipt)
-      console.log("Created NFT from SUAVE", { tokenId, recipient, signature, queryResult })
+      const suaveNftResult = await parseChatNFTLogs(suaveReceipt)
+      const { signature, tokenId, queryResult } = suaveNftResult
+      console.log("Created NFT from SUAVE", suaveNftResult)
       setTokenId(tokenId)
+
+      // add tokenId to array in LocalStorage
+      cacheNFT(suaveNftResult)
 
       // check for skill issue
       if (queryResult.toLowerCase().includes("sorry")) {
@@ -211,120 +222,135 @@ function App() {
 
   const buttonText = "text-[#f0fff0]"
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-      {isLoading && <div className="loading">
-        Loading
-      </div>}
-      <Notification messages={notifications} />
-      <div className="text-2xl font-medium">🌿 ChatNFT</div>
-      <div className='text-sm'>Mint an NFT from a ChatGPT prompt. Powered by SUAVE.</div>
-      <div className='container mx-auto app'>
-        <div id="promptArea" className="flex flex-col">
-          <div className='text-lg'>Enter a prompt:</div>
-          <div style={{ width: "100%" }}>
-            <form onSubmit={e => {
-              e.preventDefault()
-              onAddPrompt()
+  const leftStyle =
+    { display: "flex", flexDirection: "column", alignItems: "flex-start" } as const
+
+  return (<>
+    <NotificationContext.Provider value={{ notifications, setNotifications, addNotification }}>
+      <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
+        <div style={leftStyle}>
+          {isLoading && <div className="loading">
+            Loading
+          </div>}
+          <SysNotifications messages={notifications} removeMessage={(id: string) => setNotifications(notifications.filter(
+            n => n.id !== id
+          ))} />
+          <div className="menubar">
+            <div style={leftStyle}>
+              <div className="text-2xl font-medium">🌿 ChatNFT</div>
+              <div className='text-sm'>Mint an NFT from a ChatGPT prompt. Powered by SUAVE.</div>
+            </div>
+            {browserWallet && <NFTDrawer user={browserWallet.account.address} loadNFT={renderNFT} />}
+          </div>
+          <div className='container mx-auto app'>
+            <div id="promptArea" className="flex flex-col">
+              <div className='text-lg'>Enter a prompt:</div>
+              <div style={{ width: "100%" }}>
+                <form onSubmit={e => {
+                  e.preventDefault()
+                  onAddPrompt()
+                }}>
+                  <input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput}
+                    onChange={e => setPromptInput(e.target.value)}
+                    style={{ width: "100%" }}
+                  />
+                  <div className={buttonText} style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
+                </form>
+              </div>
+            </div>
+            {prompts.length > 0 && <div className="flex flex-col" style={{
+              width: "100%",
+              alignItems: "flex-start",
+              border: "1px dotted white",
+              padding: 12
             }}>
-              <input name='promptInput' type='text' placeholder={defaultPrompt} value={promptInput}
-                onChange={e => setPromptInput(e.target.value)}
-                style={{ width: "100%" }}
-              />
-              <div className={buttonText} style={{ width: "100%" }}><button type='submit'>Add Prompt</button></div>
-            </form>
-          </div>
-        </div>
-        {prompts.length > 0 && <div className="flex flex-col" style={{
-          width: "100%",
-          alignItems: "flex-start",
-          border: "1px dotted white",
-          padding: 12
-        }}>
-          <div className="flex flex-row" style={{ width: "100%" }}>
-            <div style={{ textAlign: 'left', paddingLeft: 32, paddingTop: 16 }} className='basis-1/4 text-xl'>Your Prompts</div>
-            <div className={`basis-3/4 text-xl ${buttonText} flex flex-col`} style={{ alignItems: "flex-end" }}>
-              <button style={{ width: "min-content" }} onClick={() => {
-                setPrompts([])
-              }} type='button'>Clear</button>
+              <div className="flex flex-row" style={{ width: "100%" }}>
+                <div style={{ textAlign: 'left', paddingLeft: 32, paddingTop: 16 }} className='basis-1/4 text-xl'>Your Prompts</div>
+                <div className={`basis-3/4 text-xl ${buttonText} flex flex-col`} style={{ alignItems: "flex-end" }}>
+                  <button style={{ width: "min-content" }} onClick={() => {
+                    setPrompts([])
+                  }} type='button'>Clear</button>
+                </div>
+              </div>
+              <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
+                <div className='basis-1/4'>
+                  {browserWallet && chainId && ethereum &&
+                    <BalanceAwareMintButton
+                      signer={browserWallet}
+                      l1Provider={l1Provider}
+                      suaveProvider={suaveProvider}
+                      chainId={chainId as Hex}
+                      ethereum={ethereum}
+                      onMint={onMint} />
+                  }
+                </div>
+                <div className='basis-3/4'>
+                  <ul className='list-disc' style={{ textAlign: "left", paddingLeft: 64 }}>
+                    {prompts.map((prompt, i) => (
+                      <li key={`prompt_${i + 1}`}>{prompt}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div >}
+            {
+              nftContent && <div className="nftFrameContainer">
+                <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
+                <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
+                <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
+                <div className='subtle-alert' style={{ margin: 12, marginTop: 24, padding: 16 }}>
+                  {!!nftUri &&
+                    <button style={{ marginRight: 12 }} className='button-default'
+                      onClick={onViewRawNFT}>
+                      <a className={`${buttonText} font-mono`}>
+                        View Raw NFT
+                      </a>
+                    </button>}
+                  {!!tokenId &&
+                    <button className='button-default'>
+                      <a
+                        href={`https://holesky.etherscan.io/token/${config.nfteeAddress}?a=${tokenId}`}
+                        className={`${buttonText} font-mono`}
+                        target='_blank'
+                      >View on Etherscan
+                      </a>
+                    </button>}
+                </div>
+              </div>
+            }
+          </div >
+          <div className="footer text-xs">
+            <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
+              <span>
+                L1 NFTEE: <a className='footer-link' href={`https://holesky.etherscan.io/address/${config.nfteeAddress}`} target='_blank'>
+                  {abbreviatedAddress(config.nfteeAddress)}
+                </a>
+              </span>
+              <span>
+                SUAVE ChatNFT: <a className='footer-link' href={`https://explorer.toliman.suave.flashbots.net/address/${config.chatNftAddress}?tab=txs`} target='_blank'>
+                  {abbreviatedAddress(config.chatNftAddress)}
+                </a>
+              </span>
             </div>
-          </div>
-          <div style={{ padding: 32, width: "100%" }} className='flex flex-row'>
-            <div className='basis-1/4'>
-              {browserWallet && chainId && ethereum &&
-                <BalanceAwareMintButton
-                  signer={browserWallet}
-                  l1Provider={l1Provider}
-                  suaveProvider={suaveProvider}
-                  chainId={chainId as Hex}
-                  ethereum={ethereum}
-                  onMint={onMint} />
-              }
-            </div>
-            <div className='basis-3/4'>
-              <ul className='list-disc' style={{ textAlign: "left", paddingLeft: 64 }}>
-                {prompts.map((prompt, i) => (
-                  <li key={`prompt_${i + 1}`}>{prompt}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div >}
-        {
-          nftContent && <div className="nftFrameContainer">
-            <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
-            <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
-            <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
-            <div className='subtle-alert' style={{ margin: 12, marginTop: 24 }}>
-              {!!nftUri &&
-                <button className='button-default'
-                  onClick={onViewRawNFT}>
-                  <a className={`${buttonText} font-mono`}>
-                    View Raw NFT
-                  </a>
-                </button>}
-              {!!tokenId &&
-                <button className='button-default'>
-                  <a
-                    href={`https://holesky.etherscan.io/token/${config.nfteeAddress}?a=${tokenId}`}
-                    className={`${buttonText} font-mono`}
-                    target='_blank'
-                  >View on Etherscan
-                  </a>
-                </button>}
-            </div>
-          </div>
-        }
-      </div >
-      <div className="footer text-xs">
-        <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
-          <span>
-            L1 NFTEE: <a className='footer-link' href={`https://holesky.etherscan.io/address/${config.nfteeAddress}`} target='_blank'>
-              {abbreviatedAddress(config.nfteeAddress)}
-            </a>
-          </span>
-          <span>
-            SUAVE ChatNFT: <a className='footer-link' href={`https://explorer.toliman.suave.flashbots.net/address/${config.chatNftAddress}?tab=txs`} target='_blank'>
-              {abbreviatedAddress(config.chatNftAddress)}
-            </a>
-          </span>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", textAlign: "right" }}>
-          <span>
-            (Connected) {browserWallet?.account.address}
-          </span>
-          <span>
-            <a className='footer-link' href={`https://holesky.etherscan.io/address/${browserWallet?.account.address}`} target='_blank'>
-              Holesky
-            </a>
+            <div style={{ display: "flex", flexDirection: "column", textAlign: "right" }}>
+              <span>
+                (Connected) {browserWallet?.account.address}
+              </span>
+              <span>
+                <a className='footer-link' href={`https://holesky.etherscan.io/address/${browserWallet?.account.address}`} target='_blank'>
+                  Holesky
+                </a>
             //
-            <a className='footer-link' href={`https://explorer.toliman.suave.flashbots.net/address/${browserWallet?.account.address}?tab=txs`} target='_blank'>
-              Toliman
-            </a>
-          </span>
-        </div>
-      </div>
-    </div >
+                <a className='footer-link' href={`https://explorer.toliman.suave.flashbots.net/address/${browserWallet?.account.address}?tab=txs`} target='_blank'>
+                  Toliman
+                </a>
+              </span>
+            </div>
+          </div>
+        </div >
+      </LoadingContext.Provider>
+    </NotificationContext.Provider>
+  </>
   )
 }
 
