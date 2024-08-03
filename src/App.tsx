@@ -8,7 +8,7 @@ import { parseChatNFTLogs } from './suave/nft'
 import { L1 } from './L1/chain'
 import { decodeNFTEELogs, mintNFT, readNFT } from './L1/nftee'
 import { abbreviatedAddress, escapeHtml, EthereumProvider } from './util'
-import SysNotification, { INotification } from './components/notification'
+import SysNotifications, { INotification } from './components/notifications'
 import BalanceAwareMintButton from './components/balanceAwareMintButton'
 import useCachedNFTs from './hooks/useAuthNFTs'
 import NFTDrawer from './components/nftDrawer'
@@ -232,7 +232,9 @@ function App() {
           {isLoading && <div className="loading">
             Loading
           </div>}
-          <SysNotification messages={notifications} />
+          <SysNotifications messages={notifications} removeMessage={(id: string) => setNotifications(notifications.filter(
+            n => n.id !== id
+          ))} />
           <div className="menubar">
             <div style={leftStyle}>
               <div className="text-2xl font-medium">🌿 ChatNFT</div>

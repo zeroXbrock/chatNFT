@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { INotification } from '../components/notification';
+import { INotification } from '../components/notifications';
 
 export interface NotificationsProps {
     notifications: INotification[];

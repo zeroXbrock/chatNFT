@@ -54,8 +54,8 @@ const nftDrawer = ({
                     try {
                         await loadNFT(tokenId)
                     } catch (e) {
-                        console.warn("Failed to load NFT")
-                        addNotification("Failed to load NFT", "nft-load-fail")
+                        console.warn("Failed to load NFT", tokenId)
+                        addNotification(`Failed to load NFT ${tokenId.toString().substring(0, 16)}`, `fail-${tokenId}`)
                     }
                     setIsLoading(false)
                 }} />
