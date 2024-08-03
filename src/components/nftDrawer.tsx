@@ -1,6 +1,6 @@
 import { Address } from '@flashbots/suave-viem';
 import useAuthNFTs, { AuthNFT } from '../hooks/useAuthNFTs';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import LoadingContext from '../hooks/contextLoading';
 import NotificationsContext, { NotificationsProps } from '../hooks/contextNotifications';
 
@@ -9,7 +9,7 @@ type LoadNFTCallback = (tokenId: bigint) => void;
 function NFTListItem({ nft, idx, loadNFT }: { nft: AuthNFT, idx: number, loadNFT: LoadNFTCallback }) {
     return (
         <li className="nft-li" key={idx.toString()}>
-            <button className='menu-button text-slate-500' onClick={() => loadNFT(nft.tokenId)}>
+            <button id="nft-button" className='menu-button text-slate-500' onClick={() => loadNFT(nft.tokenId)}>
                 {nft.tokenId.toString().substring(0, 16)}
             </button>
         </li>
@@ -44,11 +44,12 @@ const nftDrawer = ({
     return (
         nfts.filter(n => n.recipient.toLowerCase() === user.toLowerCase()).length > 0 && <div style={{ width: "13em" }}>
             <button className="text-lime-400 menu-button"
+                id="nft-drawer-button"
                 style={{ width: "100%" }}
                 onClick={() => setDrawerOpen(!drawerOpen)}>
                 {drawerOpen ? "(hide)" : "My Collection"}
             </button>
-            <div className='nft-drawer'>{drawerOpen &&
+            <div id="nft-drawer" className='nft-drawer'>{drawerOpen &&
                 <NFTList nfts={userNFTs} loadNFT={async (tokenId: bigint) => {
                     setIsLoading(true)
                     try {
@@ -69,6 +70,14 @@ function NFTDrawer({ user, loadNFT }: { user: Address, loadNFT: (tokenId: bigint
     const [drawerOpen, setDrawerOpen] = useState(false);
     const { setIsLoading } = useContext(LoadingContext);
     const { addNotification } = useContext(NotificationsContext);
+
+    useEffect(() => {
+        document.addEventListener("click", (clickEvent: Event) => {
+            if (clickEvent.target instanceof Element && !clickEvent.target.id.includes("nft")) {
+                setDrawerOpen(false);
+            }
+        });
+    }, [])
 
     return nftDrawer({ user, drawerOpen, setDrawerOpen, setIsLoading, loadNFT, nfts, addNotification });
 }
