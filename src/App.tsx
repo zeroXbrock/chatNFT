@@ -298,9 +298,9 @@ function App() {
                 <div className='text-lg' style={{ margin: 12 }}>This is your NFT!</div>
                 <div className='text-lg' style={{ margin: 12, marginTop: -12 }}>⬇️⬇️⬇️⬇️</div>
                 <div className='text-lg nftFrame'>{renderedNFT(nftContent)}</div>
-                <div className='subtle-alert' style={{ margin: 12, marginTop: 24 }}>
+                <div className='subtle-alert' style={{ margin: 12, marginTop: 24, padding: 16 }}>
                   {!!nftUri &&
-                    <button className='button-default'
+                    <button style={{ marginRight: 12 }} className='button-default'
                       onClick={onViewRawNFT}>
                       <a className={`${buttonText} font-mono`}>
                         View Raw NFT
