@@ -1,7 +1,8 @@
 import { Address } from '@flashbots/suave-viem';
 import useAuthNFTs, { AuthNFT } from '../hooks/useAuthNFTs';
 import { useContext, useState } from 'react';
-import { LoadingContext } from '../hooks/useLoading';
+import LoadingContext from '../hooks/contextLoading';
+import NotificationsContext, { NotificationsProps } from '../hooks/contextNotifications';
 
 type LoadNFTCallback = (tokenId: bigint) => void;
 
@@ -28,14 +29,16 @@ const nftDrawer = ({
     setDrawerOpen,
     setIsLoading,
     loadNFT,
-    nfts
+    nfts,
+    addNotification,
 }: {
     user: Address,
     drawerOpen: boolean,
     setDrawerOpen: (open: boolean) => void,
     setIsLoading: (loading: boolean) => void,
     loadNFT: LoadNFTCallback,
-    nfts: AuthNFT[]
+    nfts: AuthNFT[],
+    addNotification: NotificationsProps["addNotification"],
 }) => {
     const userNFTs = nfts.filter(n => n.recipient.toLowerCase() === user.toLowerCase());
     return (
@@ -48,7 +51,12 @@ const nftDrawer = ({
             <div className='nft-drawer'>{drawerOpen &&
                 <NFTList nfts={userNFTs} loadNFT={async (tokenId: bigint) => {
                     setIsLoading(true)
-                    await loadNFT(tokenId)
+                    try {
+                        await loadNFT(tokenId)
+                    } catch (e) {
+                        console.warn("Failed to load NFT")
+                        addNotification("Failed to load NFT", "nft-load-fail")
+                    }
                     setIsLoading(false)
                 }} />
             }</div>
@@ -60,8 +68,9 @@ function NFTDrawer({ user, loadNFT }: { user: Address, loadNFT: (tokenId: bigint
     const { nfts } = useAuthNFTs();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const { setIsLoading } = useContext(LoadingContext);
+    const { addNotification } = useContext(NotificationsContext);
 
-    return nftDrawer({ user, drawerOpen, setDrawerOpen, setIsLoading, loadNFT, nfts });
+    return nftDrawer({ user, drawerOpen, setDrawerOpen, setIsLoading, loadNFT, nfts, addNotification });
 }
 
 export default NFTDrawer;

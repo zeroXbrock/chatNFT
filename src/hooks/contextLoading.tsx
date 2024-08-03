@@ -5,7 +5,7 @@ interface LoadingContextProps {
     setIsLoading: (isLoading: boolean) => void;
 }
 
-export const LoadingContext = createContext<LoadingContextProps>({
+const LoadingContext = createContext<LoadingContextProps>({
     isLoading: false,
     setIsLoading: () => { },
 });

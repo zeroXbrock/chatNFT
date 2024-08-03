@@ -1,6 +1,4 @@
-import { FunctionComponent } from 'react';
-
-interface Notification {
+export interface INotification {
     title?: string;
     message: string;
     href?: string;
@@ -9,11 +7,11 @@ interface Notification {
     timestamp?: number;
 }
 
-interface NotificationProps {
-    messages: Notification[];
+export interface NotificationProps {
+    messages: INotification[];
 }
 
-const Notification: FunctionComponent<NotificationProps> = ({ messages }) => {
+export const SysNotification = ({ messages }: NotificationProps) => {
     const now = new Date().getTime();
     const newMessages = messages.filter((message) => {
         return message.timestamp && now - message.timestamp < 12000;
@@ -32,4 +30,4 @@ const Notification: FunctionComponent<NotificationProps> = ({ messages }) => {
         }</div>;
 };
 
-export default Notification;
+export default SysNotification;
