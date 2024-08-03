@@ -3,13 +3,11 @@ import { INotification } from '../components/notifications';
 
 export interface NotificationsProps {
     notifications: INotification[];
-    setNotifications: (n: INotification[]) => void;
     addNotification: (message: string, id: string, { href, linkText }?: { linkText?: string, href?: string }) => void;
 }
 
 export const NotificationsContext = createContext<NotificationsProps>({
     notifications: [],
-    setNotifications: () => { },
     addNotification: () => { },
 });
 

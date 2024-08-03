@@ -30,13 +30,14 @@ function App() {
   const { nfts, cacheNFT } = useCachedNFTs()
 
   const addNotification = (message: string, id: string, { href, linkText }: { linkText?: string, href?: string } = {}) => {
-    setNotifications([...notifications, {
+    const notification = {
       message,
       href,
       linkText,
       id,
       timestamp: new Date().getTime()
-    } as INotification])
+    } as INotification
+    setNotifications([notification, ...notifications])
   }
 
   const l1Provider = createPublicClient({
@@ -47,7 +48,6 @@ function App() {
   const ethereum = ('ethereum' in window) && window.ethereum as EthereumProvider
 
   useEffect(() => {
-    console.debug("cached NFTs", nfts)
     console.debug("L1_CHAIN_ID", config.l1ChainId)
     console.debug("L1_RPC_HTTP", config.l1RpcHttp)
     const load = async () => {
@@ -76,6 +76,7 @@ function App() {
     browserWallet,
     ethereum,
     nfts,
+    notifications
   ])
 
   /** Make NFT on suave and mint on L1. */
@@ -105,7 +106,7 @@ function App() {
 
       // check for skill issue
       if (queryResult.toLowerCase().includes("sorry")) {
-        addNotification("Skill issue detected", tokenId.toString(), {
+        addNotification("Skill issue detected", `sorry-${tokenId.toString()}`, {
           href: "/skillIssue.png",
           linkText: "."
         })
@@ -130,7 +131,6 @@ function App() {
           console.error("L1 transaction failed", l1Receipt)
           throw new Error("L1 transaction failed")
         }
-        setNotifications(notifications.filter(n => n.id !== mintTxHash))
         console.log("L1 transaction succeeded", l1Receipt)
         const decodedLogs = decodeNFTEELogs(l1Receipt)
         console.debug("Decoded logs", decodedLogs)
@@ -161,13 +161,11 @@ function App() {
       href: `https://explorer.toliman.suave.flashbots.net/tx/${txHash}`,
       linkText: abbreviatedAddress(txHash),
     })
-
     const receipt = await suaveProvider.waitForTransactionReceipt({ hash: txHash })
     if (receipt.status !== 'success') {
       console.error("Transaction failed", receipt)
       throw new Error("Transaction failed")
     }
-    setNotifications(notifications.filter(n => n.id !== txHash))
     return receipt
   }
 
@@ -226,7 +224,7 @@ function App() {
     { display: "flex", flexDirection: "column", alignItems: "flex-start" } as const
 
   return (<>
-    <NotificationContext.Provider value={{ notifications, setNotifications, addNotification }}>
+    <NotificationContext.Provider value={{ notifications, addNotification }}>
       <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
         <div style={leftStyle}>
           {isLoading && <div className="loading">
@@ -244,7 +242,6 @@ function App() {
           </div>
           <div className='container mx-auto app'>
             <div id="promptArea" className="flex flex-col">
-              <div className='text-lg'>Enter a prompt:</div>
               <div style={{ width: "100%" }}>
                 <form onSubmit={e => {
                   e.preventDefault()
