@@ -24,7 +24,7 @@ const SysNotifications = ({ messages, removeMessage }: NotificationProps) => {
     }, [messages]);
 
     return <div
-        style={{ visibility: messages.length > 0 ? "visible" : "hidden" }}
+        style={{ visibility: messages.length > 0 && messages[0] ? "visible" : "hidden" }}
         className='notifications text-sm'
         id='notifications'>{
             newMessages.map((message, index) => (

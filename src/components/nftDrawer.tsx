@@ -9,7 +9,7 @@ type LoadNFTCallback = (tokenId: bigint) => void;
 function NFTListItem({ nft, idx, loadNFT }: { nft: AuthNFT, idx: number, loadNFT: LoadNFTCallback }) {
     return (
         <li className="nft-li" key={idx.toString()}>
-            <button className='menu-button' onClick={() => loadNFT(nft.tokenId)}>
+            <button className='menu-button text-slate-500' onClick={() => loadNFT(nft.tokenId)}>
                 {nft.tokenId.toString().substring(0, 16)}
             </button>
         </li>
