@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { keccak256, stringToHex } from '@flashbots/suave-viem';
 
 export interface INotification {
     title?: string;
     message: string;
     href?: string;
     linkText?: string;
-    id?: string;
+    id: string;
     timestamp?: number;
 }
 
@@ -15,23 +15,13 @@ export interface NotificationProps {
 }
 
 const SysNotifications = ({ messages, removeMessage }: NotificationProps) => {
-    const now = new Date().getTime();
-    const newMessages = messages.filter((message) => {
-        return message.timestamp && now - message.timestamp < 12000;
-    });
-
-    useEffect(() => {
-    }, [messages]);
-
     return <div
-        style={{ visibility: messages.length > 0 && messages[0] ? "visible" : "hidden" }}
+        style={messages.length > 0 && messages[0].id ? {} : { backgroundColor: "#0000" }}
         className='notifications text-sm'
         id='notifications'>{
-            newMessages.map((message, index) => (
-                <div key={`${index}`} className='notification' onClick={() => {
-                    if (message.id) {
-                        removeMessage(message.id)
-                    }
+            messages.map((message, idx) => (
+                <div key={`${keccak256(stringToHex(message.message))}${idx}${message.id || "undef"}`} className='notification' onClick={() => {
+                    removeMessage(message.id)
                 }}>
                     <span>{message.message}</span>
                     {message.href && <a href={message.href} target='_blank'>{message.linkText ?? message.href.substring(0, 21)}</a>}
