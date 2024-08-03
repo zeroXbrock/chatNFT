@@ -145,7 +145,8 @@ button:focus-visible {
   }
 
   button {
-    background-color: #f9f9f9;
+    background-color: #f9f9f913;
+    color: rgba(34, 34, 34, 0.87);
   }
 }
 
