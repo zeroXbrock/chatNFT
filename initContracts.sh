@@ -23,8 +23,8 @@ echo "checking environment variables ======================================"
 env_vars=("OPENAI_API_KEY" "SUAVE_PRIVATE_KEY" "L1_PRIVATE_KEY" "SUAVE_RPC_HTTP" "L1_RPC_HTTP" "SIGNER_KEY")
 # Loop through the array and call checkenv function for each variable
 for var in "${env_vars[@]}"; do
-        checkenv "$var"
-    done
+    checkenv "$var"
+done
 echo -e "$(printf "%s\tOK\n" "${env_vars[@]}")" | column -c 2 -t
 echo "====================================================================="
 
@@ -89,24 +89,14 @@ fi
 echo -e "ChatNFT Address:\t$ChatNFTAddress"
 echo -e "NFTEE Address:\t\t$NFTEEAddress"
 
-# function to trim leading 0x from hex strings
-trim0x() {
-    echo $1 | sed 's/^0x//'
-}
-
 # register keys with ChatNFT contract
-suave spell conf-request \
-    --confidential-input $(cast abi-encode "x(string)" "$OPENAI_API_KEY") \
-    --kettle-address $KETTLE_ADDRESS \
-    --rpc $SUAVE_RPC_HTTP \
-    --private-key $(trim0x $SUAVE_PRIVATE_KEY) \
-    $ChatNFTAddress "_registerOpenAIKey()"
-suave spell conf-request \
-    --confidential-input $(cast abi-encode "x(string)" "$SIGNER_KEY") \
-    --kettle-address $KETTLE_ADDRESS \
-    --rpc $SUAVE_RPC_HTTP \
-    --private-key $(trim0x $SUAVE_PRIVATE_KEY) \
-    $ChatNFTAddress "_registerSignerKey()"
+OPENAI_API_KEY=$OPENAI_API_KEY \
+    KETTLE_ADDRESS=$KETTLE_ADDRESS \
+    SUAVE_RPC_HTTP=$SUAVE_RPC_HTTP \
+    SUAVE_PRIVATE_KEY=$SUAVE_PRIVATE_KEY \
+    ChatNFTAddress=$ChatNFTAddress \
+    SIGNER_KEY=$SIGNER_KEY \
+    $SCRIPT_DIR/initConfKeys.sh
 
 # update .env with deployed contract addresses
 cd $SCRIPT_DIR
